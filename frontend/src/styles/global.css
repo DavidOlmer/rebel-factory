@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+:root {
+  --rebel-red: #ef4444;
+  --rebel-dark: #1f2937;
+}
+
+body {
+  @apply bg-gray-900 text-gray-100;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-600 rounded;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}
+
+/* Custom animations */
+@keyframes pulse-rebel {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-rebel {
+  animation: pulse-rebel 2s ease-in-out infinite;
+}
+
+/* YAML Editor */
+.yaml-editor {
+  @apply font-mono text-sm bg-gray-800 p-4 rounded-lg border border-gray-700;
+}
