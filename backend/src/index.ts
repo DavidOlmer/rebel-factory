@@ -1,9 +1,15 @@
 import express from 'express';
 import { createServer } from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
+import cookieParser from 'cookie-parser';
 import { initDatabase, healthCheck } from './db/client';
 import { createAgentRoutes } from './routes/agents';
 import { createSprintRoutes } from './routes/sprints';
+import authRoutes from './routes/auth';
+import sharepointRoutes from './routes/sharepoint';
+import auditRoutes from './routes/audit';
+import { extractUser, validateToken } from './middleware/auth';
+import { correlationId, auditMiddleware } from './middleware/audit';
 import type { WSMessage } from './types';
 
 const PORT = parseInt(process.env.PORT || '3300', 10);
@@ -41,6 +47,8 @@ function broadcast(message: WSMessage): void {
 
 // Middleware
 app.use(express.json());
+app.use(cookieParser());
+app.use(correlationId); // REBAA-27: Add correlation ID to all requests
 
 // CORS for development
 app.use((req, res, next) => {
@@ -70,9 +78,24 @@ app.get('/health', async (_req, res) => {
   });
 });
 
+// Auth routes (public)
+app.use('/auth', authRoutes);
+
+// Extract user for all API routes (optional auth)
+app.use('/api', extractUser);
+
+// REBAA-27: Audit middleware for mutation logging
+app.use('/api', auditMiddleware);
+app.use('/auth', auditMiddleware);
+
 // API routes
 app.use('/api/agents', createAgentRoutes(broadcast));
 app.use('/api/sprints', createSprintRoutes(broadcast));
+app.use('/api/sharepoint', sharepointRoutes);
+app.use('/api/audit', auditRoutes); // REBAA-27: Audit query/export endpoints
+
+// Protected API routes example
+// app.use('/api/admin', validateToken, requireAdmin, adminRoutes);
 
 // 404 handler
 app.use((_req, res) => {
