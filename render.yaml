@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: rebel-factory-api
+    env: node
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && node server-standalone.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DEV_AUTH_BYPASS
+        value: true
+
+  - type: static
+    name: rebel-factory-ui
+    buildCommand: echo "Static site"
+    staticPublishPath: frontend
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
