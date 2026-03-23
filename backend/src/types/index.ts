@@ -1,5 +1,79 @@
 import { z } from 'zod';
 
+// Re-export SharePoint types
+export * from './sharepoint';
+
+// Re-export Audit types (REBAA-27)
+export * from './audit';
+
+// =============================================================================
+// TENANT SCHEMAS (REBAA-28)
+// =============================================================================
+
+export const TenantSettingsSchema = z.object({
+  maxAgents: z.number().optional(),
+  maxSprints: z.number().optional(),
+  features: z.array(z.string()).optional(),
+  branding: z.object({
+    primaryColor: z.string().optional(),
+    logo: z.string().url().optional(),
+  }).optional(),
+}).passthrough();
+
+export const CreateTenantSchema = z.object({
+  name: z.string().min(2).max(255),
+  slug: z.string().min(2).max(100).regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$/),
+  azureTenantId: z.string().max(100).optional(),
+  settings: TenantSettingsSchema.optional(),
+});
+
+export const UpdateTenantSchema = z.object({
+  name: z.string().min(2).max(255).optional(),
+  slug: z.string().min(2).max(100).regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$/).optional(),
+  azureTenantId: z.string().max(100).nullable().optional(),
+  settings: TenantSettingsSchema.optional(),
+  status: z.enum(['active', 'suspended', 'inactive']).optional(),
+});
+
+export const ShareAgentRequestSchema = z.object({
+  agentId: z.string().uuid(),
+  sharedWithTenantId: z.string().uuid(),
+  permissions: z.enum(['read', 'execute', 'clone']).default('read'),
+  sharedBy: z.string().optional(),
+  expiresAt: z.string().datetime().optional(),
+});
+
+// Tenant TypeScript types
+export type TenantSettings = z.infer<typeof TenantSettingsSchema>;
+export type CreateTenant = z.infer<typeof CreateTenantSchema>;
+export type UpdateTenant = z.infer<typeof UpdateTenantSchema>;
+export type ShareAgentRequest = z.infer<typeof ShareAgentRequestSchema>;
+
+export interface Tenant {
+  id: string;
+  name: string;
+  slug: string;
+  azureTenantId: string | null;
+  settings: TenantSettings | null;
+  status: 'active' | 'suspended' | 'inactive';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SharedAgent {
+  agentId: string;
+  sharedWithTenantId: string;
+  permissions: 'read' | 'execute' | 'clone';
+  sharedBy: string | null;
+  sharedAt: Date;
+  expiresAt: Date | null;
+  // Joined fields (optional)
+  agentName?: string;
+  ownerTenantName?: string;
+  sharedWithTenantName?: string;
+  sharedWithTenantSlug?: string;
+}
+
 // Agent schemas
 export const AgentTemplateSchema = z.object({
   name: z.string().min(1).max(100),
