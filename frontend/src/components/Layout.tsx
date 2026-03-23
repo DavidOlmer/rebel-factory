@@ -18,6 +18,7 @@ const navItems = [
   { path: '/agents', icon: Bot, label: 'Agents' },
   { path: '/agents/new', icon: PlusCircle, label: 'Create Agent' },
   { path: '/sprints', icon: Kanban, label: 'Sprints' },
+  { path: '/admin', icon: Settings, label: 'Admin Panel', isAdmin: true },
 ]
 
 export default function Layout({ children }: LayoutProps) {
@@ -42,7 +43,7 @@ export default function Layout({ children }: LayoutProps) {
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2">
-          {navItems.map(({ path, icon: Icon, label }) => {
+          {navItems.filter(item => !item.isAdmin).map(({ path, icon: Icon, label }) => {
             const isActive = location.pathname === path
             return (
               <Link
@@ -59,14 +60,27 @@ export default function Layout({ children }: LayoutProps) {
               </Link>
             )
           })}
+          
+          {/* Admin Section */}
+          <div className="pt-4 mt-4 border-t border-gray-700">
+            <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Administration
+            </p>
+            <Link
+              to="/admin"
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-gray-700/50 hover:text-white transition-colors"
+            >
+              <Settings className="w-5 h-5" />
+              <span className="font-medium">Admin Panel</span>
+            </Link>
+          </div>
         </nav>
 
         {/* Footer */}
         <div className="p-4 border-t border-gray-700">
-          <button className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-400 hover:bg-gray-700/50 hover:text-white transition-colors w-full">
-            <Settings className="w-5 h-5" />
-            <span className="font-medium">Settings</span>
-          </button>
+          <div className="px-4 py-2 text-xs text-gray-500">
+            Rebel AI Factory v1.0
+          </div>
         </div>
       </aside>
 
