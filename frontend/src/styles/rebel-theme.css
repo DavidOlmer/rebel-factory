@@ -1,0 +1,178 @@
+/* Rebel AI Factory - Theme
+   Based on official Rebel Group brand guidelines
+   DO NOT MODIFY brand colors */
+
+:root {
+  /* Primary Colors */
+  --rebel-navy: #152B4E;
+  --rebel-red: #EF4035;
+  --rebel-white: #FFFFFF;
+  
+  /* Secondary Colors */
+  --rebel-blue: #3167B1;
+  --rebel-cyan: #13BFCB;
+  --rebel-teal: #068EAB;
+  --rebel-purple: #3F35D6;
+  --rebel-coral: #FB7154;
+  --rebel-electric-blue: #0024E2;
+  --rebel-dark-navy: #162842;
+  --rebel-navy-alt: #1A2A4B;
+  
+  /* Accent Colors */
+  --rebel-gold: #CE984E;
+  --rebel-lime: #C0CA29;
+  --rebel-yellow: #FFDB1D;
+  --rebel-lavender: #8B8AFF;
+  --rebel-light-blue: #AFBFFF;
+  
+  /* Neutral Colors */
+  --rebel-beige: #E5D5B4;
+  --rebel-gray-50: #F9FAFB;
+  --rebel-gray-100: #F3F4F6;
+  --rebel-gray-200: #E5E7EB;
+  --rebel-gray-300: #D1D5DB;
+  --rebel-gray-400: #9CA3AF;
+  --rebel-gray-500: #6B7280;
+  --rebel-gray-600: #4B5563;
+  --rebel-gray-700: #374151;
+  
+  /* Semantic Colors */
+  --rebel-success: #13BFCB;
+  --rebel-warning: #CE984E;
+  --rebel-error: #EF4035;
+  --rebel-info: #3167B1;
+  
+  /* Button Variants */
+  --rebel-red-hover: #D93A30;
+  --rebel-navy-hover: #1A3A6B;
+  
+  /* Typography */
+  --font-headline: 'FreightBig Pro', Georgia, serif;
+  --font-body: 'FreightSans Pro', Inter, sans-serif;
+  
+  /* Font Sizes */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 2rem;
+  --text-3xl: 2.5rem;
+  
+  /* Spacing (4px grid) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-full: 9999px;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(21, 43, 78, 0.05);
+  --shadow-md: 0 4px 6px rgba(21, 43, 78, 0.1);
+  --shadow-lg: 0 10px 15px rgba(21, 43, 78, 0.1);
+  
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  
+  /* Sidebar */
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 72px;
+  --sidebar-gradient: linear-gradient(135deg, #152B4E 0%, #1A2A4B 100%);
+}
+
+/* Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  color: var(--rebel-navy);
+  background-color: var(--rebel-gray-50);
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-headline);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+h1 { font-size: var(--text-3xl); }
+h2 { font-size: var(--text-2xl); }
+h3 { font-size: var(--text-xl); }
+h4 { font-size: var(--text-lg); }
+
+.label {
+  font-family: var(--font-body);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: var(--text-xs);
+}
+
+/* Utility Classes */
+.text-navy { color: var(--rebel-navy); }
+.text-red { color: var(--rebel-red); }
+.text-muted { color: var(--rebel-gray-500); }
+.text-success { color: var(--rebel-success); }
+.text-warning { color: var(--rebel-warning); }
+.text-error { color: var(--rebel-error); }
+
+.bg-navy { background-color: var(--rebel-navy); }
+.bg-red { background-color: var(--rebel-red); }
+.bg-white { background-color: var(--rebel-white); }
+
+/* Tier Badge Backgrounds */
+.tier-core { 
+  background-color: rgba(63, 53, 214, 0.1); 
+  color: var(--rebel-purple);
+}
+.tier-venture { 
+  background-color: rgba(49, 103, 177, 0.1); 
+  color: var(--rebel-blue);
+}
+.tier-personal { 
+  background-color: var(--rebel-gray-100); 
+  color: var(--rebel-gray-500);
+}
+
+/* Focus States */
+:focus-visible {
+  outline: 2px solid var(--rebel-blue);
+  outline-offset: 2px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--rebel-gray-100);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--rebel-gray-300);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--rebel-gray-400);
+}
