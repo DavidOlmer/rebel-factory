@@ -29,6 +29,8 @@ import sharepointRoutes from './routes/sharepoint';
 import tenantRoutes from './routes/tenants';
 import auditRoutes from './routes/audit';
 import statsRoutes from './routes/stats';
+import promptRoutes from './routes/prompts';
+import telemetryRoutes from './routes/telemetry';
 import frontendApiRoutes from './routes/frontend-api';
 
 const app = express();
@@ -73,6 +75,8 @@ app.use('/api/sharepoint', sharepointRoutes);
 app.use('/api/tenants', tenantRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/prompts', promptRoutes);
+app.use('/api/telemetry', telemetryRoutes);
 
 // Error handler
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -102,13 +106,14 @@ app.listen(config.port, '0.0.0.0', () => {
   - GET  /api/dashboard     (frontend)
   - GET  /api/agents        (frontend)
   - GET  /api/templates     (frontend)
-  - GET  /api/prompts       (frontend)
   - GET  /api/costs         (frontend)
   - REST /api/sprints
   - REST /api/sharepoint/*
   - REST /api/tenants
   - REST /api/audit
   - GET  /api/stats/*
+  - REST /api/prompts       (REBAA-33: Prompt Library)
+  - REST /api/telemetry/*   (REBAA-34: Telemetry & Insights)
   `);
 });
 
