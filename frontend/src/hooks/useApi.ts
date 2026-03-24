@@ -1,105 +1,102 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useState, useEffect, useCallback } from 'react';
 
-const API_BASE = '/api'
+interface UseApiState<T> {
+  data: T | null;
+  loading: boolean;
+  error: string | null;
+}
 
-async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    headers: { 'Content-Type': 'application/json' },
+interface UseApiResult<T> extends UseApiState<T> {
+  refetch: () => Promise<void>;
+}
+
+export function useApi<T>(
+  fetchFn: () => Promise<T>,
+  dependencies: unknown[] = []
+): UseApiResult<T> {
+  const [state, setState] = useState<UseApiState<T>>({
+    data: null,
+    loading: true,
+    error: null,
+  });
+
+  const fetchData = useCallback(async () => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    try {
+      const data = await fetchFn();
+      setState({ data, loading: false, error: null });
+    } catch (err) {
+      setState({
+        data: null,
+        loading: false,
+        error: err instanceof Error ? err.message : 'An error occurred',
+      });
+    }
+  }, [fetchFn, ...dependencies]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return {
+    ...state,
+    refetch: fetchData,
+  };
+}
+
+// Simple fetch wrapper with error handling
+export async function apiFetch<T>(
+  endpoint: string,
+  options?: RequestInit
+): Promise<T> {
+  const baseUrl = process.env.REACT_APP_API_URL || '/api';
+  
+  const response = await fetch(`${baseUrl}${endpoint}`, {
     ...options,
-  })
-  if (!res.ok) {
-    throw new Error(`API error: ${res.status}`)
-  }
-  return res.json()
-}
-
-// Types
-export interface Agent {
-  id: string
-  name: string
-  template: string
-  status: 'idle' | 'running' | 'error'
-  createdAt: string
-  lastActivity?: string
-  config: Record<string, unknown>
-}
-
-export interface Sprint {
-  id: string
-  agentId: string
-  agentName: string
-  task: string
-  status: 'planning' | 'in_progress' | 'review' | 'completed' | 'failed'
-  qualityGates: QualityGate[]
-  createdAt: string
-  completedAt?: string
-}
-
-export interface QualityGate {
-  name: string
-  status: 'pending' | 'passed' | 'failed'
-  details?: string
-}
-
-export interface Template {
-  id: string
-  name: string
-  description: string
-  yaml: string
-}
-
-// Hooks
-export function useAgents() {
-  return useQuery({
-    queryKey: ['agents'],
-    queryFn: () => fetchApi<Agent[]>('/agents'),
-  })
-}
-
-export function useAgent(id: string) {
-  return useQuery({
-    queryKey: ['agents', id],
-    queryFn: () => fetchApi<Agent>(`/agents/${id}`),
-    enabled: !!id,
-  })
-}
-
-export function useCreateAgent() {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: (data: Partial<Agent>) =>
-      fetchApi<Agent>('/agents', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['agents'] })
+    headers: {
+      'Content-Type': 'application/json',
+      ...options?.headers,
     },
-  })
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error || `HTTP ${response.status}`);
+  }
+
+  return response.json();
 }
 
-export function useSprints() {
-  return useQuery({
-    queryKey: ['sprints'],
-    queryFn: () => fetchApi<Sprint[]>('/sprints'),
-  })
-}
+// Mutation hook for POST/PUT/DELETE operations
+export function useMutation<T, P = unknown>(
+  mutationFn: (params: P) => Promise<T>
+) {
+  const [state, setState] = useState<{
+    loading: boolean;
+    error: string | null;
+    data: T | null;
+  }>({
+    loading: false,
+    error: null,
+    data: null,
+  });
 
-export function useTemplates() {
-  return useQuery({
-    queryKey: ['templates'],
-    queryFn: () => fetchApi<Template[]>('/templates'),
-  })
-}
+  const mutate = useCallback(async (params: P) => {
+    setState({ loading: true, error: null, data: null });
+    try {
+      const data = await mutationFn(params);
+      setState({ loading: false, error: null, data });
+      return data;
+    } catch (err) {
+      const error = err instanceof Error ? err.message : 'An error occurred';
+      setState({ loading: false, error, data: null });
+      throw err;
+    }
+  }, [mutationFn]);
 
-export function useStats() {
-  return useQuery({
-    queryKey: ['stats'],
-    queryFn: () => fetchApi<{
-      totalAgents: number
-      activeAgents: number
-      completedSprints: number
-      successRate: number
-    }>('/stats'),
-  })
+  return {
+    ...state,
+    mutate,
+    reset: () => setState({ loading: false, error: null, data: null }),
+  };
 }
