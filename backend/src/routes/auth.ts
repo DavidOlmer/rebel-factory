@@ -7,8 +7,12 @@ import { Router, Request, Response } from 'express';
 import { CryptoProvider, AuthorizationCodeRequest, AuthorizationUrlRequest } from '@azure/msal-node';
 import { getMsalClient, SCOPES, REDIRECT_URI, FRONTEND_URL, MicrosoftUser, SessionUser } from '../config/msal';
 import { validateToken, generateToken, extractUser } from '../middleware/auth';
+import jwt from 'jsonwebtoken';
 
 const router = Router();
+
+// JWT secret for dev tokens
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 const cryptoProvider = new CryptoProvider();
 
 // In-memory store for PKCE codes (use Redis in production)
@@ -243,6 +247,66 @@ router.post('/refresh', validateToken, (req: Request, res: Response) => {
     success: true, 
     token: newToken,
     expiresIn: '24h'
+  });
+});
+
+/**
+ * POST /auth/dev-login
+ * Development-only login bypass for testing
+ * Enable with: DEV_AUTH_BYPASS=true
+ */
+router.post('/dev-login', async (req: Request, res: Response) => {
+  if (process.env.DEV_AUTH_BYPASS !== 'true') {
+    return res.status(403).json({ 
+      error: 'Dev login disabled',
+      message: 'Set DEV_AUTH_BYPASS=true to enable'
+    });
+  }
+  
+  const { 
+    email = 'dev@rebelai.nl', 
+    name = 'Dev User', 
+    role = 'admin' 
+  } = req.body;
+  
+  const sessionUser: SessionUser = {
+    id: email,
+    email,
+    name,
+    roles: [role, 'member', 'rebel'],
+    azureId: 'dev-user-' + Date.now(),
+  };
+  
+  const token = jwt.sign(sessionUser, JWT_SECRET, { expiresIn: '24h' });
+  
+  // Set cookie
+  res.cookie('auth_token', token, {
+    httpOnly: true,
+    secure: false, // Dev mode
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000,
+  });
+  
+  res.json({ 
+    token, 
+    user: {
+      id: sessionUser.id,
+      email: sessionUser.email,
+      name: sessionUser.name,
+      roles: sessionUser.roles,
+    },
+    message: 'Dev login successful (not for production!)'
+  });
+});
+
+/**
+ * GET /auth/dev-status
+ * Check if dev auth is enabled
+ */
+router.get('/dev-status', (_req: Request, res: Response) => {
+  res.json({
+    devAuthEnabled: process.env.DEV_AUTH_BYPASS === 'true',
+    environment: process.env.NODE_ENV || 'development',
   });
 });
 
