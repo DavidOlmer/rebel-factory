@@ -1,16 +1,64 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3300/api';
 
 interface UseApiState<T> {
   data: T | null;
   loading: boolean;
-  error: string | null;
+  error: Error | null;
 }
 
 interface UseApiResult<T> extends UseApiState<T> {
   refetch: () => Promise<void>;
 }
 
-export function useApi<T>(
+// Main hook for GET requests with endpoint string
+export function useApi<T>(endpoint: string): UseApiResult<T> {
+  const [state, setState] = useState<UseApiState<T>>({
+    data: null,
+    loading: true,
+    error: null,
+  });
+  
+  const endpointRef = useRef(endpoint);
+  endpointRef.current = endpoint;
+
+  const fetchData = useCallback(async () => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    try {
+      const response = await fetch(`${API_BASE}${endpointRef.current}`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      setState({ data, loading: false, error: null });
+    } catch (err) {
+      setState({
+        data: null,
+        loading: false,
+        error: err instanceof Error ? err : new Error('An error occurred'),
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+  }, [endpoint, fetchData]);
+
+  return {
+    ...state,
+    refetch: fetchData,
+  };
+}
+
+// Alternative hook using a fetch function (for more complex scenarios)
+export function useApiWithFn<T>(
   fetchFn: () => Promise<T>,
   dependencies: unknown[] = []
 ): UseApiResult<T> {
@@ -29,7 +77,7 @@ export function useApi<T>(
       setState({
         data: null,
         loading: false,
-        error: err instanceof Error ? err.message : 'An error occurred',
+        error: err instanceof Error ? err : new Error('An error occurred'),
       });
     }
   }, [fetchFn, ...dependencies]);
@@ -49,9 +97,7 @@ export async function apiFetch<T>(
   endpoint: string,
   options?: RequestInit
 ): Promise<T> {
-  const baseUrl = process.env.REACT_APP_API_URL || '/api';
-  
-  const response = await fetch(`${baseUrl}${endpoint}`, {
+  const response = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -67,13 +113,42 @@ export async function apiFetch<T>(
   return response.json();
 }
 
+// POST request helper
+export async function apiPost<T, P = unknown>(
+  endpoint: string,
+  payload: P
+): Promise<T> {
+  return apiFetch<T>(endpoint, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+// PUT request helper
+export async function apiPut<T, P = unknown>(
+  endpoint: string,
+  payload: P
+): Promise<T> {
+  return apiFetch<T>(endpoint, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+// DELETE request helper
+export async function apiDelete<T>(endpoint: string): Promise<T> {
+  return apiFetch<T>(endpoint, {
+    method: 'DELETE',
+  });
+}
+
 // Mutation hook for POST/PUT/DELETE operations
 export function useMutation<T, P = unknown>(
   mutationFn: (params: P) => Promise<T>
 ) {
   const [state, setState] = useState<{
     loading: boolean;
-    error: string | null;
+    error: Error | null;
     data: T | null;
   }>({
     loading: false,
@@ -88,7 +163,7 @@ export function useMutation<T, P = unknown>(
       setState({ loading: false, error: null, data });
       return data;
     } catch (err) {
-      const error = err instanceof Error ? err.message : 'An error occurred';
+      const error = err instanceof Error ? err : new Error('An error occurred');
       setState({ loading: false, error, data: null });
       throw err;
     }
@@ -100,3 +175,6 @@ export function useMutation<T, P = unknown>(
     reset: () => setState({ loading: false, error: null, data: null }),
   };
 }
+
+// Export API_BASE for use in other modules
+export { API_BASE };
