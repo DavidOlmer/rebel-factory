@@ -1,114 +1,108 @@
 import React, { useState } from 'react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { AgentCard } from '../components/features/AgentCard';
-import { Button } from '../components/ui/Button';
-import type { Agent, Tier, Category, Status } from '../types';
-
-// Mock data
-const mockAgents: Agent[] = [
-  {
-    id: '1',
-    name: 'Customer Support Bot',
-    description: 'Handles customer inquiries across all Rebel Group brands with multi-language support.',
-    tier: 'core',
-    category: 'rebelgroup',
-    status: 'active',
-    qualityScore: 94,
-    runCount: 15420,
-    costPerRun: 0.023,
-  },
-  {
-    id: '2',
-    name: 'Booking Assistant',
-    description: 'Automates travel booking workflows for D-reizen and Prijsvrij Vakanties.',
-    tier: 'venture',
-    category: 'travel',
-    status: 'active',
-    qualityScore: 91,
-    runCount: 8932,
-    costPerRun: 0.045,
-  },
-  {
-    id: '3',
-    name: 'Content Generator',
-    description: 'Creates marketing content for entertainment venues and promotions.',
-    tier: 'venture',
-    category: 'entertainment',
-    status: 'pending',
-    qualityScore: 78,
-    runCount: 2341,
-    costPerRun: 0.067,
-  },
-  {
-    id: '4',
-    name: 'Financial Analyst',
-    description: 'Processes financial reports and generates executive summaries.',
-    tier: 'core',
-    category: 'services',
-    status: 'active',
-    qualityScore: 97,
-    runCount: 1256,
-    costPerRun: 0.089,
-  },
-  {
-    id: '5',
-    name: 'Innovation Scout',
-    description: 'Monitors tech trends and identifies investment opportunities.',
-    tier: 'personal',
-    category: 'innovation',
-    status: 'active',
-    qualityScore: 85,
-    runCount: 567,
-    costPerRun: 0.112,
-  },
-  {
-    id: '6',
-    name: 'Email Responder',
-    description: 'Draft email responses for common customer inquiries.',
-    tier: 'personal',
-    category: 'services',
-    status: 'inactive',
-    qualityScore: 62,
-    runCount: 3421,
-    costPerRun: 0.015,
-  },
-];
+import { useApi } from '../hooks/useApi';
+import { useNavigation } from '../App';
+import type { Agent, Tier, Status } from '../types';
 
 type FilterTier = Tier | 'all';
 type FilterStatus = Status | 'all';
 
+// Loading skeleton
+const LoadingSkeleton: React.FC = () => (
+  <div className="animate-pulse">
+    <div className="flex gap-6 mb-6 flex-wrap">
+      <div className="h-8 w-48 bg-rebel-gray-200 rounded" />
+      <div className="h-8 w-48 bg-rebel-gray-200 rounded" />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div key={i} className="h-48 bg-rebel-gray-200 rounded-lg" />
+      ))}
+    </div>
+  </div>
+);
+
+// Error state
+const ErrorState: React.FC<{ message: string; onRetry?: () => void }> = ({ message, onRetry }) => (
+  <div className="flex flex-col items-center justify-center py-12 text-center">
+    <div className="text-rebel-red text-4xl mb-4">⚠️</div>
+    <p className="text-rebel-red font-medium mb-2">Error loading agents</p>
+    <p className="text-rebel-gray-500 text-sm mb-4">{message}</p>
+    {onRetry && (
+      <button
+        onClick={onRetry}
+        className="px-4 py-2 bg-rebel-navy text-white rounded-md hover:opacity-90 transition-opacity"
+      >
+        Try Again
+      </button>
+    )}
+  </div>
+);
+
+// Filter button component
+const FilterButton: React.FC<{
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}> = ({ label, active, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`px-3 py-1.5 text-sm font-normal border rounded-md cursor-pointer transition-all ${
+      active 
+        ? 'bg-rebel-navy text-white border-rebel-navy font-semibold' 
+        : 'bg-transparent text-rebel-gray-600 border-rebel-gray-200 hover:bg-rebel-gray-50'
+    }`}
+  >
+    {label}
+  </button>
+);
+
 export const Agents: React.FC = () => {
+  const { navigate } = useNavigation();
+  const { data: agents, loading, error, refetch } = useApi<Agent[]>('/agents');
   const [filterTier, setFilterTier] = useState<FilterTier>('all');
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
 
-  const filteredAgents = mockAgents.filter((agent) => {
+  if (loading) {
+    return (
+      <div>
+        <PageHeader
+          title="Agents"
+          subtitle="Loading agents..."
+          action={{
+            label: 'New Agent',
+            icon: '+',
+            onClick: () => navigate('/agents/new'),
+          }}
+        />
+        <LoadingSkeleton />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div>
+        <PageHeader
+          title="Agents"
+          subtitle="Error loading agents"
+          action={{
+            label: 'New Agent',
+            icon: '+',
+            onClick: () => navigate('/agents/new'),
+          }}
+        />
+        <ErrorState message={error.message} onRetry={refetch} />
+      </div>
+    );
+  }
+
+  const filteredAgents = (agents || []).filter((agent) => {
     if (filterTier !== 'all' && agent.tier !== filterTier) return false;
     if (filterStatus !== 'all' && agent.status !== filterStatus) return false;
     return true;
   });
-
-  const FilterButton: React.FC<{
-    label: string;
-    active: boolean;
-    onClick: () => void;
-  }> = ({ label, active, onClick }) => (
-    <button
-      onClick={onClick}
-      style={{
-        padding: '0.375rem 0.75rem',
-        fontSize: 'var(--text-sm)',
-        fontWeight: active ? 600 : 400,
-        backgroundColor: active ? 'var(--rebel-navy)' : 'transparent',
-        color: active ? 'var(--rebel-white)' : 'var(--rebel-gray-600)',
-        border: '1px solid var(--rebel-gray-200)',
-        borderRadius: 'var(--radius-md)',
-        cursor: 'pointer',
-        transition: 'all var(--transition-fast)',
-      }}
-    >
-      {label}
-    </button>
-  );
 
   return (
     <div>
@@ -118,30 +112,17 @@ export const Agents: React.FC = () => {
         action={{
           label: 'New Agent',
           icon: '+',
-          onClick: () => {},
+          onClick: () => navigate('/agents/new'),
         }}
       />
 
       {/* Filters */}
-      <div style={{
-        display: 'flex',
-        gap: 'var(--space-6)',
-        marginBottom: 'var(--space-6)',
-        flexWrap: 'wrap',
-      }}>
+      <div className="flex gap-6 mb-6 flex-wrap">
         <div>
-          <span style={{
-            display: 'block',
-            fontSize: 'var(--text-xs)',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            color: 'var(--rebel-gray-500)',
-            marginBottom: 'var(--space-2)',
-          }}>
+          <span className="block text-xs font-bold uppercase tracking-wider text-rebel-gray-500 mb-2">
             Tier
           </span>
-          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <div className="flex gap-2">
             <FilterButton label="All" active={filterTier === 'all'} onClick={() => setFilterTier('all')} />
             <FilterButton label="Core" active={filterTier === 'core'} onClick={() => setFilterTier('core')} />
             <FilterButton label="Venture" active={filterTier === 'venture'} onClick={() => setFilterTier('venture')} />
@@ -150,18 +131,10 @@ export const Agents: React.FC = () => {
         </div>
 
         <div>
-          <span style={{
-            display: 'block',
-            fontSize: 'var(--text-xs)',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-            color: 'var(--rebel-gray-500)',
-            marginBottom: 'var(--space-2)',
-          }}>
+          <span className="block text-xs font-bold uppercase tracking-wider text-rebel-gray-500 mb-2">
             Status
           </span>
-          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <div className="flex gap-2">
             <FilterButton label="All" active={filterStatus === 'all'} onClick={() => setFilterStatus('all')} />
             <FilterButton label="Active" active={filterStatus === 'active'} onClick={() => setFilterStatus('active')} />
             <FilterButton label="Pending" active={filterStatus === 'pending'} onClick={() => setFilterStatus('pending')} />
@@ -171,11 +144,7 @@ export const Agents: React.FC = () => {
       </div>
 
       {/* Agent Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-        gap: 'var(--space-4)',
-      }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredAgents.map((agent) => (
           <AgentCard
             key={agent.id}
@@ -187,15 +156,11 @@ export const Agents: React.FC = () => {
 
       {/* Empty State */}
       {filteredAgents.length === 0 && (
-        <div style={{
-          textAlign: 'center',
-          padding: 'var(--space-12)',
-          color: 'var(--rebel-gray-500)',
-        }}>
-          <p style={{ fontSize: 'var(--text-lg)', marginBottom: 'var(--space-2)' }}>
+        <div className="text-center py-12 text-rebel-gray-500">
+          <p className="text-lg mb-2">
             No agents found
           </p>
-          <p style={{ fontSize: 'var(--text-sm)' }}>
+          <p className="text-sm">
             Try adjusting your filters
           </p>
         </div>
