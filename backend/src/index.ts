@@ -11,7 +11,10 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
-import { config } from './config/env';
+import { config, validateConfig } from './config/env';
+
+// Validate environment on startup
+validateConfig();
 
 // Middleware
 import { extractUser } from './middleware/auth';
@@ -25,6 +28,8 @@ import authRoutes from './routes/auth';
 import sharepointRoutes from './routes/sharepoint';
 import tenantRoutes from './routes/tenants';
 import auditRoutes from './routes/audit';
+import statsRoutes from './routes/stats';
+import frontendApiRoutes from './routes/frontend-api';
 
 const app = express();
 
@@ -58,12 +63,16 @@ app.get('/api/health', (req, res) => {
 // Auth routes (public)
 app.use('/auth', authRoutes);
 
+// Frontend-facing API routes (return data in shapes expected by React components)
+app.use('/api', frontendApiRoutes);
+
 // API routes (protected by auth middleware in each route)
-app.use('/api/agents', agentRoutes);
+app.use('/api/agents-internal', agentRoutes);
 app.use('/api/sprints', sprintRoutes);
 app.use('/api/sharepoint', sharepointRoutes);
 app.use('/api/tenants', tenantRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Error handler
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -90,11 +99,16 @@ app.listen(config.port, '0.0.0.0', () => {
   - GET  /auth/callback
   - GET  /auth/logout
   - GET  /auth/me
-  - REST /api/agents
+  - GET  /api/dashboard     (frontend)
+  - GET  /api/agents        (frontend)
+  - GET  /api/templates     (frontend)
+  - GET  /api/prompts       (frontend)
+  - GET  /api/costs         (frontend)
   - REST /api/sprints
   - REST /api/sharepoint/*
   - REST /api/tenants
   - REST /api/audit
+  - GET  /api/stats/*
   `);
 });
 
