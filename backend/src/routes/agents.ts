@@ -1,48 +1,57 @@
+/**
+ * REBEL AI FACTORY - AGENT ROUTES
+ * REBAA-32: Full CRUD with authentication and RBAC
+ */
+
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { CreateAgentSchema, UpdateAgentSchema, AgentIdSchema } from '../types';
-import * as agentService from '../services/agent.service';
+import { AgentService } from '../services/agent.service';
+import { validateToken, extractUser } from '../middleware/auth';
+import { requirePermission, canAccess } from '../middleware/rbac';
+import { pool } from '../db/client';
 import type { WSMessage } from '../types';
+
+const agentService = new AgentService(pool);
 
 export function createAgentRoutes(broadcast: (msg: WSMessage) => void): Router {
   const router = Router();
 
-  // List all agents
-  router.get('/', async (_req: Request, res: Response) => {
+  // ============================================
+  // LIST AGENTS
+  // Public listing with optional filters
+  // ============================================
+  router.get('/', extractUser, async (req: Request, res: Response) => {
     try {
-      const agents = await agentService.getAllAgents();
-      res.json({ data: agents, count: agents.length });
+      const { tenantId, tier, status, ownerId } = req.query;
+      
+      const agents = await agentService.list({
+        tenantId: tenantId as string | undefined,
+        tier: tier as 'personal' | 'venture' | 'core' | undefined,
+        status: status as 'idle' | 'running' | 'paused' | 'archived' | undefined,
+        ownerId: ownerId as string | undefined,
+      });
+      
+      res.json({ agents, count: agents.length });
     } catch (error) {
       console.error('Error listing agents:', error);
       res.status(500).json({ error: 'Failed to list agents' });
     }
   });
 
-  // Get agent by ID
-  router.get('/:id', async (req: Request, res: Response) => {
-    try {
-      const { id } = AgentIdSchema.parse({ id: req.params.id });
-      const agent = await agentService.getAgentById(id);
-      
-      if (!agent) {
-        return res.status(404).json({ error: 'Agent not found' });
-      }
-      
-      res.json({ data: agent });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: 'Invalid agent ID', details: error.errors });
-      }
-      console.error('Error getting agent:', error);
-      res.status(500).json({ error: 'Failed to get agent' });
-    }
-  });
-
-  // Create agent
-  router.post('/', async (req: Request, res: Response) => {
+  // ============================================
+  // CREATE AGENT
+  // Requires authentication
+  // ============================================
+  router.post('/', validateToken, async (req: Request, res: Response) => {
     try {
       const data = CreateAgentSchema.parse(req.body);
-      const agent = await agentService.createAgent(data);
+      
+      const agent = await agentService.create({
+        ...data,
+        ownerId: req.user!.id,
+        tenantId: (req as any).tenantId || undefined,
+      });
       
       broadcast({
         type: 'agent_created',
@@ -50,7 +59,7 @@ export function createAgentRoutes(broadcast: (msg: WSMessage) => void): Router {
         timestamp: new Date().toISOString(),
       });
       
-      res.status(201).json({ data: agent });
+      res.status(201).json({ agent });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: 'Validation failed', details: error.errors });
@@ -60,17 +69,47 @@ export function createAgentRoutes(broadcast: (msg: WSMessage) => void): Router {
     }
   });
 
-  // Update agent
-  router.put('/:id', async (req: Request, res: Response) => {
+  // ============================================
+  // GET AGENT BY ID
+  // Public read
+  // ============================================
+  router.get('/:id', async (req: Request, res: Response) => {
     try {
       const { id } = AgentIdSchema.parse({ id: req.params.id });
-      const data = UpdateAgentSchema.parse(req.body);
-      
-      const agent = await agentService.updateAgent(id, data);
+      const agent = await agentService.get(id);
       
       if (!agent) {
         return res.status(404).json({ error: 'Agent not found' });
       }
+      
+      res.json({ agent });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: 'Invalid agent ID', details: error.errors });
+      }
+      console.error('Error getting agent:', error);
+      res.status(500).json({ error: 'Failed to get agent' });
+    }
+  });
+
+  // ============================================
+  // UPDATE AGENT
+  // Requires authentication
+  // ============================================
+  router.put('/:id', validateToken, async (req: Request, res: Response) => {
+    try {
+      const { id } = AgentIdSchema.parse({ id: req.params.id });
+      const data = UpdateAgentSchema.parse(req.body);
+      
+      // Check if agent exists
+      const existing = await agentService.get(id);
+      if (!existing) {
+        return res.status(404).json({ error: 'Agent not found' });
+      }
+      
+      // TODO: Add ownership check (user must own agent or be admin)
+      
+      const agent = await agentService.update(id, data);
       
       broadcast({
         type: 'agent_updated',
@@ -78,7 +117,7 @@ export function createAgentRoutes(broadcast: (msg: WSMessage) => void): Router {
         timestamp: new Date().toISOString(),
       });
       
-      res.json({ data: agent });
+      res.json({ agent });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: 'Validation failed', details: error.errors });
@@ -88,43 +127,132 @@ export function createAgentRoutes(broadcast: (msg: WSMessage) => void): Router {
     }
   });
 
-  // Delete agent
-  router.delete('/:id', async (req: Request, res: Response) => {
+  // ============================================
+  // DELETE AGENT
+  // Requires authentication + agents:delete permission
+  // ============================================
+  router.delete('/:id', 
+    validateToken, 
+    requirePermission('agents:delete' as any),
+    async (req: Request, res: Response) => {
+      try {
+        const { id } = AgentIdSchema.parse({ id: req.params.id });
+        
+        // Check if agent exists
+        const existing = await agentService.get(id);
+        if (!existing) {
+          return res.status(404).json({ error: 'Agent not found' });
+        }
+        
+        await agentService.delete(id);
+        
+        broadcast({
+          type: 'agent_deleted',
+          payload: { id },
+          timestamp: new Date().toISOString(),
+        });
+        
+        res.status(204).send();
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return res.status(400).json({ error: 'Invalid agent ID', details: error.errors });
+        }
+        console.error('Error deleting agent:', error);
+        res.status(500).json({ error: 'Failed to delete agent' });
+      }
+    }
+  );
+
+  // ============================================
+  // START AGENT RUN
+  // Requires authentication, records telemetry
+  // ============================================
+  router.post('/:id/run', validateToken, async (req: Request, res: Response) => {
     try {
       const { id } = AgentIdSchema.parse({ id: req.params.id });
-      const deleted = await agentService.deleteAgent(id);
+      const { taskType, taskDescription } = req.body;
       
-      if (!deleted) {
+      if (!taskType) {
+        return res.status(400).json({ 
+          error: 'Validation failed', 
+          message: 'taskType is required' 
+        });
+      }
+      
+      const validTaskTypes = ['sprint', 'chat', 'analysis', 'research', 'review'];
+      if (!validTaskTypes.includes(taskType)) {
+        return res.status(400).json({ 
+          error: 'Validation failed', 
+          message: `taskType must be one of: ${validTaskTypes.join(', ')}` 
+        });
+      }
+      
+      const run = await agentService.startRun(id, {
+        taskType,
+        taskDescription,
+        userId: req.user!.id,
+        tenantId: (req as any).tenantId,
+      });
+      
+      res.json({ run });
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('not found')) {
+        return res.status(404).json({ error: error.message });
+      }
+      console.error('Error starting agent run:', error);
+      res.status(500).json({ error: 'Failed to start agent run' });
+    }
+  });
+
+  // ============================================
+  // GET AGENT RUN HISTORY
+  // Public read with pagination
+  // ============================================
+  router.get('/:id/runs', async (req: Request, res: Response) => {
+    try {
+      const { id } = AgentIdSchema.parse({ id: req.params.id });
+      const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
+      const offset = parseInt(req.query.offset as string) || 0;
+      
+      // Check if agent exists
+      const agent = await agentService.get(id);
+      if (!agent) {
         return res.status(404).json({ error: 'Agent not found' });
       }
       
-      broadcast({
-        type: 'agent_deleted',
-        payload: { id },
-        timestamp: new Date().toISOString(),
-      });
+      const { runs, total } = await agentService.getRuns(id, { limit, offset });
       
-      res.status(204).send();
+      res.json({
+        runs,
+        pagination: {
+          total,
+          limit,
+          offset,
+          hasMore: offset + runs.length < total
+        }
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: 'Invalid agent ID', details: error.errors });
       }
-      console.error('Error deleting agent:', error);
-      res.status(500).json({ error: 'Failed to delete agent' });
+      console.error('Error getting agent runs:', error);
+      res.status(500).json({ error: 'Failed to get agent runs' });
     }
   });
 
-  // Validate template
+  // ============================================
+  // VALIDATE AGENT TEMPLATE
+  // ============================================
   router.post('/:id/validate', async (req: Request, res: Response) => {
     try {
       const { id } = AgentIdSchema.parse({ id: req.params.id });
-      const agent = await agentService.getAgentById(id);
+      const agent = await agentService.get(id);
       
       if (!agent) {
         return res.status(404).json({ error: 'Agent not found' });
       }
       
-      const result = agentService.validateTemplate({
+      const result = agentService.validate({
         name: agent.name,
         creature: agent.creature,
         emoji: agent.emoji,
