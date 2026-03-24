@@ -44,6 +44,7 @@ import credentialsRoutes from './routes/credentials';
 import autonomousDecisionRoutes from './routes/autonomous-decision';
 import codeExecutionRoutes from './routes/code-execution';
 import ragRoutes from './routes/rag';
+import trigramRoutes from './routes/trigram';
 import { pool } from './db/client';
 
 const app = express();
@@ -106,6 +107,7 @@ app.use('/api/credentials', credentialsRoutes); // Credential Isolation: per-age
 app.use('/api/autonomous', autonomousDecisionRoutes); // Autonomous Decision: when to act vs escalate
 app.use('/api/execute', codeExecutionRoutes); // Code Execution: sandboxed code runner
 app.use('/api/rag', ragRoutes); // Hybrid RAG: grep + embeddings (Cursor-style search)
+app.use('/api/trigram', trigramRoutes); // Trigram Index: Cursor-style fast regex search
 
 // Error handler
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
