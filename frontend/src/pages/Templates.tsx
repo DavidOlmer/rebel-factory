@@ -1,71 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { TemplateCard } from '../components/features/TemplateCard';
+import { TemplateEditor } from '../components/features/TemplateEditor';
+import { useApi, apiPost, apiPut, useMutation } from '../hooks/useApi';
 import type { Template, Category } from '../types';
-
-// Mock data
-const mockTemplates: Template[] = [
-  {
-    id: '1',
-    name: 'Customer Service Agent',
-    description: 'Complete setup for multi-brand customer support with escalation paths.',
-    category: 'rebelgroup',
-    tier: 'core',
-    usageCount: 23,
-    rating: 4.8,
-    createdAt: '2026-02-15',
-  },
-  {
-    id: '2',
-    name: 'Travel Booking Flow',
-    description: 'End-to-end booking automation for D-reizen and Prijsvrij.',
-    category: 'travel',
-    tier: 'venture',
-    usageCount: 18,
-    rating: 4.5,
-    createdAt: '2026-02-20',
-  },
-  {
-    id: '3',
-    name: 'Event Promo Generator',
-    description: 'Creates promotional content for AFAS Live and Pathé events.',
-    category: 'entertainment',
-    tier: 'venture',
-    usageCount: 12,
-    rating: 4.2,
-    createdAt: '2026-03-01',
-  },
-  {
-    id: '4',
-    name: 'Invoice Processor',
-    description: 'Extracts and validates invoice data for finance teams.',
-    category: 'services',
-    tier: 'core',
-    usageCount: 31,
-    rating: 4.9,
-    createdAt: '2026-01-10',
-  },
-  {
-    id: '5',
-    name: 'Startup Evaluator',
-    description: 'Analyzes startup pitches and generates investment memos.',
-    category: 'innovation',
-    tier: 'personal',
-    usageCount: 7,
-    rating: 4.1,
-    createdAt: '2026-03-10',
-  },
-  {
-    id: '6',
-    name: 'Content Calendar Builder',
-    description: 'Plans and generates social media content calendars.',
-    category: 'entertainment',
-    tier: 'venture',
-    usageCount: 15,
-    rating: 4.4,
-    createdAt: '2026-02-28',
-  },
-];
 
 type FilterCategory = Category | 'all';
 
@@ -78,10 +16,193 @@ const categoryTabs: { value: FilterCategory; label: string; icon: string }[] = [
   { value: 'innovation', label: 'Innovation', icon: '💡' },
 ];
 
-export const Templates: React.FC = () => {
-  const [activeCategory, setActiveCategory] = useState<FilterCategory>('all');
+// Loading skeleton
+const LoadingSkeleton: React.FC = () => (
+  <div className="animate-pulse">
+    <div className="flex gap-1 mb-6 border-b border-rebel-gray-200 pb-1 overflow-x-auto">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div key={i} className="h-10 w-24 bg-rebel-gray-200 rounded" />
+      ))}
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {[1, 2, 3, 4, 5, 6].map((i) => (
+        <div key={i} className="h-44 bg-rebel-gray-200 rounded-lg" />
+      ))}
+    </div>
+  </div>
+);
 
-  const filteredTemplates = mockTemplates.filter((template) => {
+// Error state
+const ErrorState: React.FC<{ message: string; onRetry?: () => void }> = ({ message, onRetry }) => (
+  <div className="flex flex-col items-center justify-center py-12 text-center">
+    <div className="text-rebel-red text-4xl mb-4">⚠️</div>
+    <p className="text-rebel-red font-medium mb-2">Error loading templates</p>
+    <p className="text-rebel-gray-500 text-sm mb-4">{message}</p>
+    {onRetry && (
+      <button
+        onClick={onRetry}
+        className="px-4 py-2 bg-rebel-navy text-white rounded-md hover:opacity-90 transition-opacity"
+      >
+        Try Again
+      </button>
+    )}
+  </div>
+);
+
+// Success toast notification
+const Toast: React.FC<{ message: string; onClose: () => void }> = ({ message, onClose }) => {
+  React.useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        bottom: '24px',
+        right: '24px',
+        backgroundColor: 'var(--rebel-teal)',
+        color: 'white',
+        padding: '12px 20px',
+        borderRadius: 'var(--radius-md)',
+        boxShadow: 'var(--shadow-lg)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        zIndex: 1000,
+        animation: 'slideIn 0.3s ease-out',
+      }}
+    >
+      <span>✓</span>
+      <span>{message}</span>
+      <button
+        onClick={onClose}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: 'white',
+          cursor: 'pointer',
+          padding: '0 4px',
+          fontSize: '18px',
+        }}
+      >
+        ×
+      </button>
+    </div>
+  );
+};
+
+export const Templates: React.FC = () => {
+  const { data: templates, loading, error, refetch } = useApi<Template[]>('/templates');
+  const [activeCategory, setActiveCategory] = useState<FilterCategory>('all');
+  const [editorMode, setEditorMode] = useState<'closed' | 'create' | 'edit'>('closed');
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | undefined>(undefined);
+  const [toast, setToast] = useState<string | null>(null);
+
+  // Create mutation
+  const createMutation = useMutation<Template, Partial<Template>>(
+    useCallback((data: Partial<Template>) => apiPost<Template>('/templates', data), [])
+  );
+
+  // Update mutation
+  const updateMutation = useMutation<Template, { id: string; data: Partial<Template> }>(
+    useCallback(({ id, data }) => apiPut<Template>(`/templates/${id}`, data), [])
+  );
+
+  const handleCreateClick = () => {
+    setSelectedTemplate(undefined);
+    setEditorMode('create');
+  };
+
+  const handleEditClick = (template: Template) => {
+    setSelectedTemplate(template);
+    setEditorMode('edit');
+  };
+
+  const handleCancel = () => {
+    setEditorMode('closed');
+    setSelectedTemplate(undefined);
+  };
+
+  const handleSave = async (data: Partial<Template>) => {
+    try {
+      if (editorMode === 'edit' && selectedTemplate) {
+        await updateMutation.mutate({ id: selectedTemplate.id, data });
+        setToast('Template updated successfully!');
+      } else {
+        await createMutation.mutate(data);
+        setToast('Template created successfully!');
+      }
+      setEditorMode('closed');
+      setSelectedTemplate(undefined);
+      refetch();
+    } catch (err) {
+      console.error('Failed to save template:', err);
+      setToast('Failed to save template. Please try again.');
+    }
+  };
+
+  const isSaving = createMutation.loading || updateMutation.loading;
+
+  // Show editor overlay
+  if (editorMode !== 'closed') {
+    return (
+      <div>
+        <PageHeader
+          title="Templates"
+          subtitle={editorMode === 'create' ? 'Create a new template' : `Editing: ${selectedTemplate?.name}`}
+        />
+        <div style={{ maxWidth: '800px' }}>
+          <TemplateEditor
+            template={selectedTemplate}
+            onSave={handleSave}
+            onCancel={handleCancel}
+            loading={isSaving}
+          />
+        </div>
+        {toast && <Toast message={toast} onClose={() => setToast(null)} />}
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div>
+        <PageHeader
+          title="Templates"
+          subtitle="Loading templates..."
+          action={{
+            label: 'Create Template',
+            icon: '+',
+            onClick: handleCreateClick,
+          }}
+        />
+        <LoadingSkeleton />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div>
+        <PageHeader
+          title="Templates"
+          subtitle="Error loading templates"
+          action={{
+            label: 'Create Template',
+            icon: '+',
+            onClick: handleCreateClick,
+          }}
+        />
+        <ErrorState message={error.message} onRetry={refetch} />
+      </div>
+    );
+  }
+
+  const allTemplates = templates || [];
+  
+  const filteredTemplates = allTemplates.filter((template) => {
     if (activeCategory === 'all') return true;
     return template.category === activeCategory;
   });
@@ -94,56 +215,31 @@ export const Templates: React.FC = () => {
         action={{
           label: 'Create Template',
           icon: '+',
-          onClick: () => {},
+          onClick: handleCreateClick,
         }}
       />
 
       {/* Category Tabs */}
-      <div style={{
-        display: 'flex',
-        gap: 'var(--space-1)',
-        marginBottom: 'var(--space-6)',
-        borderBottom: '1px solid var(--rebel-gray-200)',
-        overflowX: 'auto',
-        paddingBottom: 'var(--space-1)',
-      }}>
+      <div className="flex gap-1 mb-6 border-b border-rebel-gray-200 pb-1 overflow-x-auto">
         {categoryTabs.map((tab) => (
           <button
             key={tab.value}
             onClick={() => setActiveCategory(tab.value)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 'var(--space-2)',
-              padding: 'var(--space-3) var(--space-4)',
-              fontSize: 'var(--text-sm)',
-              fontWeight: activeCategory === tab.value ? 600 : 400,
-              color: activeCategory === tab.value 
-                ? 'var(--rebel-red)' 
-                : 'var(--rebel-gray-600)',
-              backgroundColor: 'transparent',
-              border: 'none',
-              borderBottom: activeCategory === tab.value 
-                ? '2px solid var(--rebel-red)' 
-                : '2px solid transparent',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              transition: 'all var(--transition-fast)',
-              marginBottom: '-1px',
-            }}
+            className={`flex items-center gap-2 px-4 py-3 text-sm whitespace-nowrap bg-transparent border-none cursor-pointer transition-all -mb-px ${
+              activeCategory === tab.value
+                ? 'font-semibold text-rebel-red border-b-2 border-rebel-red'
+                : 'font-normal text-rebel-gray-600 border-b-2 border-transparent hover:text-rebel-navy'
+            }`}
           >
             <span>{tab.icon}</span>
             <span>{tab.label}</span>
             {tab.value !== 'all' && (
-              <span style={{
-                fontSize: 'var(--text-xs)',
-                backgroundColor: activeCategory === tab.value 
-                  ? 'rgba(239, 64, 53, 0.1)' 
-                  : 'var(--rebel-gray-100)',
-                padding: '0.125rem 0.5rem',
-                borderRadius: 'var(--radius-full)',
-              }}>
-                {mockTemplates.filter(t => t.category === tab.value).length}
+              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                activeCategory === tab.value
+                  ? 'bg-rebel-red/10'
+                  : 'bg-rebel-gray-100'
+              }`}>
+                {allTemplates.filter(t => t.category === tab.value).length}
               </span>
             )}
           </button>
@@ -151,35 +247,36 @@ export const Templates: React.FC = () => {
       </div>
 
       {/* Templates Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-        gap: 'var(--space-4)',
-      }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredTemplates.map((template) => (
           <TemplateCard
             key={template.id}
             template={template}
-            onClick={() => {}}
+            onClick={() => handleEditClick(template)}
           />
         ))}
       </div>
 
       {/* Empty State */}
       {filteredTemplates.length === 0 && (
-        <div style={{
-          textAlign: 'center',
-          padding: 'var(--space-12)',
-          color: 'var(--rebel-gray-500)',
-        }}>
-          <p style={{ fontSize: 'var(--text-lg)', marginBottom: 'var(--space-2)' }}>
+        <div className="text-center py-12 text-rebel-gray-500">
+          <p className="text-lg mb-2">
             No templates in this category
           </p>
-          <p style={{ fontSize: 'var(--text-sm)' }}>
+          <p className="text-sm mb-4">
             Create the first one!
           </p>
+          <button
+            onClick={handleCreateClick}
+            className="px-4 py-2 bg-rebel-red text-white rounded-md hover:opacity-90 transition-opacity"
+          >
+            + Create Template
+          </button>
         </div>
       )}
+
+      {/* Toast notification */}
+      {toast && <Toast message={toast} onClose={() => setToast(null)} />}
     </div>
   );
 };
