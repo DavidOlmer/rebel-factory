@@ -4,181 +4,485 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Rebel AI Factory</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            rebel: {
+              navy: '#152B4E',
+              red: '#EF4035',
+              coral: '#FB7154',
+              blue: '#3167B1',
+              cyan: '#13BFCB',
+              teal: '#068EAB',
+              gold: '#CE984E',
+              lime: '#C0CA29',
+              purple: '#3F35D6',
+              lavender: '#8B8AFF',
+              beige: '#E5D5B4',
+              dark: '#162842',
+              light: '#F7F7F7'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .rebel-gradient { background: linear-gradient(135deg, #152B4E 0%, #1A2A4B 100%); }
+    .rebel-card { @apply bg-white rounded-lg shadow-sm border border-gray-100 hover:shadow-md transition-shadow; }
+    .nav-link { @apply flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all; }
+    .nav-link.active { @apply bg-rebel-red text-white; }
+    .stat-card { @apply bg-white rounded-xl p-6 border-l-4; }
+    .btn-primary { @apply bg-rebel-red text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors font-medium; }
+    .btn-secondary { @apply bg-rebel-navy text-white px-4 py-2 rounded-lg hover:bg-opacity-90 transition-colors font-medium; }
+    .tier-core { @apply bg-rebel-purple/10 text-rebel-purple; }
+    .tier-venture { @apply bg-rebel-blue/10 text-rebel-blue; }
+    .tier-personal { @apply bg-gray-100 text-gray-600; }
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-rebel-light min-h-screen">
   <div class="flex">
-    <aside class="w-64 bg-gray-900 text-white min-h-screen p-4 fixed">
-      <h1 class="text-xl font-bold mb-8">🏭 Rebel AI Factory</h1>
-      <nav class="space-y-1">
-        <a href="#" onclick="showPage('dashboard')" class="nav-link block px-4 py-2 rounded hover:bg-gray-800">📊 Dashboard</a>
-        <a href="#" onclick="showPage('agents')" class="nav-link block px-4 py-2 rounded hover:bg-gray-800">🤖 Agents</a>
-        <a href="#" onclick="showPage('templates')" class="nav-link block px-4 py-2 rounded hover:bg-gray-800">📦 Templates</a>
-        <a href="#" onclick="showPage('prompts')" class="nav-link block px-4 py-2 rounded hover:bg-gray-800">📝 Prompts</a>
-        <a href="#" onclick="showPage('costs')" class="nav-link block px-4 py-2 rounded hover:bg-gray-800">💰 Costs</a>
-      </nav>
-      <div class="absolute bottom-4 left-4 right-4 bg-gray-800 rounded p-3 text-sm">
-        <div class="flex items-center gap-2"><span class="w-2 h-2 bg-green-500 rounded-full"></span> Online</div>
-        <div class="text-xs text-gray-500 mt-1">Enterprise v2.0</div>
+    <!-- Sidebar -->
+    <aside class="w-72 rebel-gradient text-white min-h-screen p-6 fixed">
+      <!-- Logo -->
+      <div class="mb-10">
+        <svg class="h-8" viewBox="0 0 120 24" fill="none">
+          <text x="0" y="20" fill="#EF4035" font-family="Inter" font-weight="700" font-size="24" letter-spacing="2">REBEL</text>
+        </svg>
+        <div class="text-rebel-coral text-sm font-medium mt-1">AI Factory</div>
       </div>
-    </aside>
-    <main class="ml-64 flex-1 p-8">
-      <div id="page-dashboard">
-        <h2 class="text-2xl font-bold mb-6">Dashboard</h2>
-        <div class="grid grid-cols-4 gap-4 mb-8">
-          <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
-            <div class="text-gray-500 text-sm">Agents</div>
-            <div id="stat-agents" class="text-3xl font-bold">-</div>
-          </div>
-          <div class="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
-            <div class="text-gray-500 text-sm">Templates</div>
-            <div id="stat-templates" class="text-3xl font-bold">-</div>
-          </div>
-          <div class="bg-white rounded-lg shadow p-4 border-l-4 border-orange-500">
-            <div class="text-gray-500 text-sm">Prompts</div>
-            <div id="stat-prompts" class="text-3xl font-bold">-</div>
-          </div>
-          <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
-            <div class="text-gray-500 text-sm">Tokens (Month)</div>
-            <div id="stat-tokens" class="text-3xl font-bold">-</div>
+      
+      <nav class="space-y-2">
+        <a href="#" class="nav-link active" data-page="dashboard">
+          <span class="text-xl">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-link" data-page="agents">
+          <span class="text-xl">🤖</span>
+          <span>Agents</span>
+        </a>
+        <a href="#" class="nav-link" data-page="templates">
+          <span class="text-xl">📦</span>
+          <span>Templates</span>
+        </a>
+        <a href="#" class="nav-link" data-page="prompts">
+          <span class="text-xl">📝</span>
+          <span>Prompt Library</span>
+        </a>
+        <a href="#" class="nav-link" data-page="telemetry">
+          <span class="text-xl">📈</span>
+          <span>Telemetry</span>
+        </a>
+        
+        <div class="pt-6 mt-6 border-t border-white/20">
+          <p class="text-xs text-rebel-coral uppercase tracking-wider mb-3 font-semibold">Admin</p>
+          <a href="#" class="nav-link" data-page="approvals">
+            <span class="text-xl">✅</span>
+            <span>Approvals</span>
+            <span id="approval-badge" class="ml-auto bg-rebel-red text-xs px-2 py-0.5 rounded-full">2</span>
+          </a>
+          <a href="#" class="nav-link" data-page="costs">
+            <span class="text-xl">💰</span>
+            <span>Cost Tracking</span>
+          </a>
+          <a href="#" class="nav-link" data-page="insights">
+            <span class="text-xl">🧠</span>
+            <span>Learning Insights</span>
+          </a>
+        </div>
+      </nav>
+      
+      <!-- User -->
+      <div class="absolute bottom-6 left-6 right-6">
+        <div class="bg-white/10 backdrop-blur rounded-xl p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-rebel-red rounded-full flex items-center justify-center font-bold">D</div>
+            <div>
+              <div class="font-medium">David</div>
+              <div class="text-xs text-rebel-coral">Admin</div>
+            </div>
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-6">
-          <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="font-bold mb-4">🧠 Learning Insights</h3>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="ml-72 flex-1 p-8">
+      
+      <!-- Dashboard Page -->
+      <div id="page-dashboard" class="page">
+        <div class="flex justify-between items-center mb-8">
+          <div>
+            <h1 class="text-3xl font-bold text-rebel-navy">Dashboard</h1>
+            <p class="text-gray-500 mt-1">Welcome back, David</p>
+          </div>
+          <button class="btn-primary">+ New Agent</button>
+        </div>
+        
+        <!-- Stats -->
+        <div class="grid grid-cols-4 gap-6 mb-8">
+          <div class="stat-card border-rebel-navy">
+            <div class="text-gray-500 text-sm font-medium">Total Agents</div>
+            <div id="stat-agents" class="text-4xl font-bold text-rebel-navy mt-2">-</div>
+            <div class="text-rebel-teal text-sm mt-2">↑ 2 this week</div>
+          </div>
+          <div class="stat-card border-rebel-blue">
+            <div class="text-gray-500 text-sm font-medium">Templates</div>
+            <div id="stat-templates" class="text-4xl font-bold text-rebel-blue mt-2">-</div>
+            <div class="text-gray-400 text-sm mt-2">Rebelgroup sectors</div>
+          </div>
+          <div class="stat-card border-rebel-red">
+            <div class="text-gray-500 text-sm font-medium">Prompts</div>
+            <div id="stat-prompts" class="text-4xl font-bold text-rebel-red mt-2">-</div>
+            <div class="text-gray-400 text-sm mt-2">In library</div>
+          </div>
+          <div class="stat-card border-rebel-lime">
+            <div class="text-gray-500 text-sm font-medium">Tokens (Month)</div>
+            <div id="stat-tokens" class="text-4xl font-bold text-rebel-navy mt-2">-</div>
+            <div class="text-rebel-lime text-sm mt-2">62% of budget</div>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid grid-cols-2 gap-6 mb-8">
+          <div class="rebel-card p-6">
+            <h3 class="font-bold text-rebel-navy mb-4">🧠 Learning Insights</h3>
             <div id="insights-list" class="space-y-3"></div>
           </div>
-          <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="font-bold mb-4">💰 Cost Summary</h3>
+          <div class="rebel-card p-6">
+            <h3 class="font-bold text-rebel-navy mb-4">💰 Monthly Cost</h3>
             <div id="cost-summary"></div>
           </div>
         </div>
+
+        <!-- Recent Activity -->
+        <div class="rebel-card p-6">
+          <h3 class="font-bold text-rebel-navy mb-4">Recent Agent Activity</h3>
+          <div id="recent-activity" class="space-y-3"></div>
+        </div>
       </div>
-      <div id="page-agents" class="hidden">
-        <h2 class="text-2xl font-bold mb-6">Agents</h2>
+
+      <!-- Agents Page -->
+      <div id="page-agents" class="page hidden">
+        <div class="flex justify-between items-center mb-8">
+          <div>
+            <h1 class="text-3xl font-bold text-rebel-navy">Agents</h1>
+            <p class="text-gray-500 mt-1">Manage your AI agents across all tiers</p>
+          </div>
+          <button class="btn-primary">+ Create Agent</button>
+        </div>
+        
+        <!-- Tier Filter -->
+        <div class="flex gap-2 mb-6">
+          <button class="tier-btn px-4 py-2 rounded-lg bg-rebel-navy text-white font-medium" data-tier="all">All</button>
+          <button class="tier-btn px-4 py-2 rounded-lg bg-rebel-purple/10 text-rebel-purple font-medium" data-tier="core">🏆 Core</button>
+          <button class="tier-btn px-4 py-2 rounded-lg bg-rebel-blue/10 text-rebel-blue font-medium" data-tier="venture">🚀 Venture</button>
+          <button class="tier-btn px-4 py-2 rounded-lg bg-gray-100 text-gray-600 font-medium" data-tier="personal">👤 Personal</button>
+        </div>
+        
         <div id="agents-grid" class="grid grid-cols-4 gap-4"></div>
       </div>
-      <div id="page-templates" class="hidden">
-        <h2 class="text-2xl font-bold mb-6">Agent Templates</h2>
-        <p class="text-gray-500 mb-4">Pre-built agents for Rebelgroup sectors & services</p>
-        <div id="templates-grid" class="grid grid-cols-3 gap-4"></div>
+
+      <!-- Templates Page -->
+      <div id="page-templates" class="page hidden">
+        <div class="flex justify-between items-center mb-8">
+          <div>
+            <h1 class="text-3xl font-bold text-rebel-navy">Agent Templates</h1>
+            <p class="text-gray-500 mt-1">Pre-built agents for Rebelgroup sectors & services</p>
+          </div>
+          <button class="btn-primary">+ Create Template</button>
+        </div>
+        
+        <!-- Category Filter -->
+        <div class="flex gap-2 mb-6">
+          <button class="cat-btn px-4 py-2 rounded-lg bg-rebel-navy text-white font-medium" data-cat="all">All</button>
+          <button class="cat-btn px-4 py-2 rounded-lg bg-rebel-teal/10 text-rebel-teal font-medium" data-cat="sector">🏢 Sector</button>
+          <button class="cat-btn px-4 py-2 rounded-lg bg-rebel-gold/10 text-rebel-gold font-medium" data-cat="service">⚙️ Service</button>
+          <button class="cat-btn px-4 py-2 rounded-lg bg-rebel-purple/10 text-rebel-purple font-medium" data-cat="general">📋 General</button>
+        </div>
+        
+        <div id="templates-grid" class="grid grid-cols-3 gap-6"></div>
       </div>
-      <div id="page-prompts" class="hidden">
-        <h2 class="text-2xl font-bold mb-6">Prompt Library</h2>
-        <div id="prompts-grid" class="grid grid-cols-3 gap-4"></div>
+
+      <!-- Prompts Page -->
+      <div id="page-prompts" class="page hidden">
+        <div class="flex justify-between items-center mb-8">
+          <div>
+            <h1 class="text-3xl font-bold text-rebel-navy">Prompt Library</h1>
+            <p class="text-gray-500 mt-1">Reusable prompts with variables and versioning</p>
+          </div>
+          <button class="btn-primary">+ Create Prompt</button>
+        </div>
+        <div id="prompts-grid" class="grid grid-cols-3 gap-6"></div>
       </div>
-      <div id="page-costs" class="hidden">
-        <h2 class="text-2xl font-bold mb-6">Cost Tracking</h2>
+
+      <!-- Costs Page -->
+      <div id="page-costs" class="page hidden">
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold text-rebel-navy">Cost Tracking</h1>
+          <p class="text-gray-500 mt-1">Monitor token usage and costs across the organization</p>
+        </div>
         <div id="costs-detail"></div>
       </div>
+
+      <!-- Insights Page -->
+      <div id="page-insights" class="page hidden">
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold text-rebel-navy">Learning Insights</h1>
+          <p class="text-gray-500 mt-1">Self-learning system detects patterns and optimizations</p>
+        </div>
+        <div id="insights-detail" class="space-y-4"></div>
+      </div>
+
+      <!-- Approvals Page -->
+      <div id="page-approvals" class="page hidden">
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold text-rebel-navy">Pending Approvals</h1>
+          <p class="text-gray-500 mt-1">Review and approve agent promotions and changes</p>
+        </div>
+        <div id="approvals-list" class="space-y-4"></div>
+      </div>
+
+      <!-- Telemetry Page -->
+      <div id="page-telemetry" class="page hidden">
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold text-rebel-navy">Telemetry</h1>
+          <p class="text-gray-500 mt-1">Real-time agent performance metrics</p>
+        </div>
+        <div id="telemetry-content"></div>
+      </div>
+
     </main>
   </div>
+
   <script>
     const API = window.location.origin + '/api';
     
-    function showPage(page) {
-      document.querySelectorAll('main > div').forEach(p => p.classList.add('hidden'));
-      document.getElementById('page-' + page).classList.remove('hidden');
-    }
+    // Navigation
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const page = link.dataset.page;
+        document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+        document.getElementById('page-' + page).classList.remove('hidden');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+      });
+    });
     
     async function load() {
       try {
-        const [stats, agents, templates, prompts, costs, insights] = await Promise.all([
+        const [stats, agents, templates, prompts, costs, insights, approvals] = await Promise.all([
           fetch(API + '/stats').then(r => r.json()),
           fetch(API + '/agents').then(r => r.json()),
           fetch(API + '/templates').then(r => r.json()),
           fetch(API + '/prompts').then(r => r.json()),
           fetch(API + '/costs/summary').then(r => r.json()),
-          fetch(API + '/telemetry/insights').then(r => r.json())
+          fetch(API + '/telemetry/insights').then(r => r.json()),
+          fetch(API + '/approvals/pending').then(r => r.json())
         ]);
         
+        // Stats
         document.getElementById('stat-agents').textContent = stats.agents?.total || agents.agents?.length || 0;
         document.getElementById('stat-templates').textContent = stats.templates?.total || templates.templates?.length || 0;
         document.getElementById('stat-prompts').textContent = stats.prompts?.total || prompts.prompts?.length || 0;
         document.getElementById('stat-tokens').textContent = ((stats.tokens?.thisMonth || 0) / 1000000).toFixed(0) + 'M';
         
+        // Agents
         document.getElementById('agents-grid').innerHTML = (agents.agents || []).map(a => `
-          <div class="bg-white rounded-lg shadow p-4">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="text-2xl">${a.icon || '🤖'}</span>
+          <div class="rebel-card p-5 hover:border-rebel-red cursor-pointer">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="text-3xl">${a.icon || '🤖'}</span>
               <div>
-                <div class="font-bold">${a.name}</div>
-                <div class="text-sm text-gray-500">${a.role || a.tier}</div>
+                <div class="font-bold text-rebel-navy">${a.name}</div>
+                <div class="text-sm text-gray-500">${a.role || ''}</div>
               </div>
             </div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="px-2 py-0.5 rounded ${a.tier === 'core' ? 'bg-purple-100 text-purple-700' : a.tier === 'venture' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100'}">${a.tier}</span>
-              <span>${a.totalRuns || 0} runs</span>
+            <div class="flex items-center justify-between">
+              <span class="px-3 py-1 rounded-full text-sm font-medium ${
+                a.tier === 'core' ? 'tier-core' : a.tier === 'venture' ? 'tier-venture' : 'tier-personal'
+              }">${a.tier}</span>
+              <span class="text-sm text-gray-500">${a.totalRuns || 0} runs</span>
             </div>
+            ${a.avgQuality ? `<div class="mt-3 pt-3 border-t border-gray-100">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Quality</span>
+                <span class="font-medium ${a.avgQuality >= 90 ? 'text-rebel-teal' : a.avgQuality >= 70 ? 'text-rebel-gold' : 'text-rebel-red'}">${a.avgQuality}%</span>
+              </div>
+            </div>` : ''}
           </div>
         `).join('');
         
+        // Templates
         document.getElementById('templates-grid').innerHTML = (templates.templates || []).map(t => `
-          <div class="bg-white rounded-lg shadow p-4">
-            <div class="flex items-center gap-2 mb-2">
-              <span class="text-2xl">${t.icon || '📦'}</span>
-              <div class="font-bold">${t.name}</div>
+          <div class="rebel-card p-6 hover:border-rebel-blue cursor-pointer">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="text-3xl">${t.icon || '📦'}</span>
+              <div class="font-bold text-rebel-navy">${t.name}</div>
             </div>
-            <p class="text-sm text-gray-500 mb-2">${t.description || ''}</p>
-            <div class="flex items-center justify-between text-sm">
-              <span class="px-2 py-0.5 rounded bg-gray-100">${t.category}</span>
-              <span>${t.usageCount || 0} uses</span>
+            <p class="text-sm text-gray-500 mb-4 line-clamp-2">${t.description || ''}</p>
+            <div class="flex items-center justify-between">
+              <span class="px-3 py-1 rounded-full text-sm font-medium ${
+                t.category === 'sector' ? 'bg-rebel-teal/10 text-rebel-teal' : 
+                t.category === 'service' ? 'bg-rebel-gold/10 text-rebel-gold' : 
+                'bg-rebel-purple/10 text-rebel-purple'
+              }">${t.category}</span>
+              <span class="text-sm text-gray-500">${t.usageCount || 0} uses</span>
             </div>
           </div>
         `).join('');
         
+        // Prompts
         document.getElementById('prompts-grid').innerHTML = (prompts.prompts || []).map(p => `
-          <div class="bg-white rounded-lg shadow p-4">
-            <div class="font-bold mb-1">${p.name}</div>
-            <div class="flex items-center justify-between text-sm">
-              <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-700">${p.category}</span>
-              <span>⭐ ${p.avgRating || '-'}</span>
+          <div class="rebel-card p-6 hover:border-rebel-purple cursor-pointer">
+            <div class="font-bold text-rebel-navy mb-2">${p.name}</div>
+            <div class="flex items-center justify-between">
+              <span class="px-3 py-1 rounded-full text-sm font-medium bg-rebel-blue/10 text-rebel-blue">${p.category}</span>
+              <span class="text-sm">⭐ ${p.avgRating || '-'}</span>
             </div>
+            <div class="text-sm text-gray-500 mt-3">${p.usageCount || 0} uses</div>
           </div>
         `).join('');
         
-        document.getElementById('insights-list').innerHTML = (insights.insights || []).map(i => `
-          <div class="p-3 rounded ${i.type === 'drift_warning' ? 'bg-yellow-50 border border-yellow-200' : i.type === 'pattern' ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'}">
-            <div class="font-medium">${i.title}</div>
-            <div class="text-sm text-gray-600">${i.description}</div>
+        // Insights
+        const insightHtml = (insights.insights || []).map(i => `
+          <div class="p-4 rounded-xl ${
+            i.type === 'drift_warning' ? 'bg-amber-50 border border-amber-200' : 
+            i.type === 'pattern' ? 'bg-emerald-50 border border-emerald-200' : 
+            'bg-blue-50 border border-blue-200'
+          }">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="font-medium text-rebel-navy">${i.title}</div>
+                <div class="text-sm text-gray-600 mt-1">${i.description}</div>
+              </div>
+              <span class="text-sm font-medium px-2 py-1 rounded ${
+                i.type === 'drift_warning' ? 'bg-amber-200 text-amber-800' :
+                i.type === 'pattern' ? 'bg-emerald-200 text-emerald-800' :
+                'bg-blue-200 text-blue-800'
+              }">${Math.round(i.confidence * 100)}%</span>
+            </div>
           </div>
         `).join('');
+        document.getElementById('insights-list').innerHTML = insightHtml;
+        document.getElementById('insights-detail').innerHTML = insightHtml;
         
-        document.getElementById('cost-summary').innerHTML = `
-          <div class="space-y-4">
-            <div class="flex justify-between items-center">
-              <span>This Month</span>
-              <span class="text-2xl font-bold">$${costs.currentMonth?.totalCost?.toFixed(2) || '0'}</span>
+        // Costs
+        const costHtml = `
+          <div class="space-y-6">
+            <div class="flex justify-between items-end">
+              <div>
+                <div class="text-gray-500 text-sm">This Month</div>
+                <div class="text-4xl font-bold text-rebel-navy">$${costs.currentMonth?.totalCost?.toFixed(2) || '0'}</div>
+              </div>
+              <div class="text-right">
+                <div class="text-gray-500 text-sm">Budget</div>
+                <div class="text-xl font-medium text-rebel-navy">$${costs.budget?.monthly || 0}</div>
+              </div>
             </div>
-            <div class="w-full bg-gray-200 rounded-full h-4">
-              <div class="bg-orange-500 h-4 rounded-full" style="width: ${costs.budget?.percentUsed || 0}%"></div>
+            <div class="w-full bg-gray-200 rounded-full h-3">
+              <div class="h-3 rounded-full transition-all ${costs.budget?.percentUsed > 80 ? 'bg-rebel-red' : 'bg-rebel-teal'}" 
+                   style="width: ${costs.budget?.percentUsed || 0}%"></div>
             </div>
-            <div class="text-sm text-gray-500">${costs.budget?.percentUsed || 0}% of $${costs.budget?.monthly || 0} budget</div>
+            <div class="text-sm text-gray-500">${costs.budget?.percentUsed || 0}% of monthly budget used</div>
           </div>
         `;
+        document.getElementById('cost-summary').innerHTML = costHtml;
         
         document.getElementById('costs-detail').innerHTML = `
           <div class="grid grid-cols-2 gap-6">
-            <div class="bg-white rounded-lg shadow p-6">
-              <h3 class="font-bold mb-4">By Model</h3>
+            <div class="rebel-card p-6">
+              <h3 class="font-bold text-rebel-navy mb-4">By Model</h3>
               ${Object.entries(costs.currentMonth?.byModel || {}).map(([m, d]) => `
-                <div class="flex justify-between py-2 border-b">
-                  <span>${m}</span>
-                  <span>$${d.cost?.toFixed(2) || 0}</span>
+                <div class="flex justify-between py-3 border-b border-gray-100 last:border-0">
+                  <span class="text-gray-600">${m.split('-').slice(0, 2).join(' ')}</span>
+                  <span class="font-medium text-rebel-navy">$${d.cost?.toFixed(2) || 0}</span>
                 </div>
               `).join('')}
             </div>
-            <div class="bg-white rounded-lg shadow p-6">
-              <h3 class="font-bold mb-4">By Tier</h3>
+            <div class="rebel-card p-6">
+              <h3 class="font-bold text-rebel-navy mb-4">By Tier</h3>
               ${Object.entries(costs.currentMonth?.byTier || {}).map(([t, d]) => `
-                <div class="flex justify-between py-2 border-b">
-                  <span class="capitalize">${t}</span>
-                  <span>$${d.cost?.toFixed(2) || 0}</span>
+                <div class="flex justify-between py-3 border-b border-gray-100 last:border-0">
+                  <span class="capitalize ${t === 'core' ? 'text-rebel-purple' : t === 'venture' ? 'text-rebel-blue' : 'text-gray-600'}">${t}</span>
+                  <span class="font-medium text-rebel-navy">$${d.cost?.toFixed(2) || 0}</span>
                 </div>
               `).join('')}
             </div>
           </div>
         `;
+        
+        // Approvals
+        document.getElementById('approvals-list').innerHTML = (approvals.approvals || []).map(a => `
+          <div class="rebel-card p-6">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="px-3 py-1 rounded-full text-sm font-medium bg-rebel-coral/10 text-rebel-coral">${a.type}</span>
+                <div class="font-bold text-rebel-navy mt-2">${a.title}</div>
+                <div class="text-sm text-gray-500 mt-1">Requested by ${a.requesterName}</div>
+              </div>
+              <div class="flex gap-2">
+                <button class="btn-secondary">Reject</button>
+                <button class="btn-primary">Approve</button>
+              </div>
+            </div>
+          </div>
+        `).join('') || '<p class="text-gray-500">No pending approvals</p>';
+        
+        // Recent activity
+        document.getElementById('recent-activity').innerHTML = (agents.agents || []).slice(0, 5).map(a => `
+          <div class="flex items-center justify-between py-3 border-b border-gray-100 last:border-0">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl">${a.icon || '🤖'}</span>
+              <div>
+                <div class="font-medium text-rebel-navy">${a.name}</div>
+                <div class="text-sm text-gray-500">${a.totalRuns || 0} total runs</div>
+              </div>
+            </div>
+            <span class="px-3 py-1 rounded-full text-sm font-medium ${a.status === 'running' ? 'bg-rebel-lime/20 text-rebel-lime' : 'bg-gray-100 text-gray-600'}">${a.status}</span>
+          </div>
+        `).join('');
+        
+        // Telemetry
+        document.getElementById('telemetry-content').innerHTML = `
+          <div class="grid grid-cols-3 gap-6 mb-6">
+            <div class="rebel-card p-6 text-center">
+              <div class="text-4xl font-bold text-rebel-navy">${stats.agents?.total || 0}</div>
+              <div class="text-gray-500 mt-1">Active Agents</div>
+            </div>
+            <div class="rebel-card p-6 text-center">
+              <div class="text-4xl font-bold text-rebel-teal">94.2%</div>
+              <div class="text-gray-500 mt-1">Success Rate</div>
+            </div>
+            <div class="rebel-card p-6 text-center">
+              <div class="text-4xl font-bold text-rebel-blue">86.5</div>
+              <div class="text-gray-500 mt-1">Avg Quality Score</div>
+            </div>
+          </div>
+          <div class="rebel-card p-6">
+            <h3 class="font-bold text-rebel-navy mb-4">Agent Performance</h3>
+            <div class="space-y-4">
+              ${(agents.agents || []).map(a => `
+                <div class="flex items-center gap-4">
+                  <span class="w-32 font-medium">${a.name}</span>
+                  <div class="flex-1 bg-gray-200 rounded-full h-2">
+                    <div class="h-2 rounded-full bg-rebel-teal" style="width: ${a.avgQuality || 50}%"></div>
+                  </div>
+                  <span class="w-12 text-right font-medium">${a.avgQuality || '-'}%</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+        
       } catch (e) {
         console.error('Load error:', e);
       }
