@@ -1,125 +1,205 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Bot, Plus, Search, Filter } from 'lucide-react'
-import { useAgents } from '../hooks/useApi'
-import AgentCard from '../components/AgentCard'
-import type { Agent } from '../types'
+import React, { useState } from 'react';
+import { PageHeader } from '../components/layout/PageHeader';
+import { AgentCard } from '../components/features/AgentCard';
+import { Button } from '../components/ui/Button';
+import type { Agent, Tier, Category, Status } from '../types';
 
-// Mock data fallback
+// Mock data
 const mockAgents: Agent[] = [
-  { id: '1', name: 'CodeReviewer', template: 'reviewer', status: 'running', createdAt: '2024-01-15', config: {} },
-  { id: '2', name: 'TestWriter', template: 'tester', status: 'running', createdAt: '2024-01-14', config: {} },
-  { id: '3', name: 'DocGenerator', template: 'docs', status: 'idle', createdAt: '2024-01-12', config: {} },
-  { id: '4', name: 'SecurityScanner', template: 'security', status: 'error', createdAt: '2024-01-10', config: {} },
-  { id: '5', name: 'RefactorBot', template: 'refactor', status: 'idle', createdAt: '2024-01-08', config: {} },
-  { id: '6', name: 'PerformanceOptimizer', template: 'perf', status: 'running', createdAt: '2024-01-05', config: {} },
-]
+  {
+    id: '1',
+    name: 'Customer Support Bot',
+    description: 'Handles customer inquiries across all Rebel Group brands with multi-language support.',
+    tier: 'core',
+    category: 'rebelgroup',
+    status: 'active',
+    qualityScore: 94,
+    runCount: 15420,
+    costPerRun: 0.023,
+  },
+  {
+    id: '2',
+    name: 'Booking Assistant',
+    description: 'Automates travel booking workflows for D-reizen and Prijsvrij Vakanties.',
+    tier: 'venture',
+    category: 'travel',
+    status: 'active',
+    qualityScore: 91,
+    runCount: 8932,
+    costPerRun: 0.045,
+  },
+  {
+    id: '3',
+    name: 'Content Generator',
+    description: 'Creates marketing content for entertainment venues and promotions.',
+    tier: 'venture',
+    category: 'entertainment',
+    status: 'pending',
+    qualityScore: 78,
+    runCount: 2341,
+    costPerRun: 0.067,
+  },
+  {
+    id: '4',
+    name: 'Financial Analyst',
+    description: 'Processes financial reports and generates executive summaries.',
+    tier: 'core',
+    category: 'services',
+    status: 'active',
+    qualityScore: 97,
+    runCount: 1256,
+    costPerRun: 0.089,
+  },
+  {
+    id: '5',
+    name: 'Innovation Scout',
+    description: 'Monitors tech trends and identifies investment opportunities.',
+    tier: 'personal',
+    category: 'innovation',
+    status: 'active',
+    qualityScore: 85,
+    runCount: 567,
+    costPerRun: 0.112,
+  },
+  {
+    id: '6',
+    name: 'Email Responder',
+    description: 'Draft email responses for common customer inquiries.',
+    tier: 'personal',
+    category: 'services',
+    status: 'inactive',
+    qualityScore: 62,
+    runCount: 3421,
+    costPerRun: 0.015,
+  },
+];
 
-export default function Agents() {
-  const { data: agents, isLoading } = useAgents()
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
+type FilterTier = Tier | 'all';
+type FilterStatus = Status | 'all';
 
-  const displayAgents = agents || mockAgents
+export const Agents: React.FC = () => {
+  const [filterTier, setFilterTier] = useState<FilterTier>('all');
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
 
-  const filteredAgents = displayAgents.filter(agent => {
-    const matchesSearch = agent.name.toLowerCase().includes(search.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || agent.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
+  const filteredAgents = mockAgents.filter((agent) => {
+    if (filterTier !== 'all' && agent.tier !== filterTier) return false;
+    if (filterStatus !== 'all' && agent.status !== filterStatus) return false;
+    return true;
+  });
 
-  const statusCounts = {
-    all: displayAgents.length,
-    running: displayAgents.filter(a => a.status === 'running').length,
-    idle: displayAgents.filter(a => a.status === 'idle').length,
-    error: displayAgents.filter(a => a.status === 'error').length,
-  }
+  const FilterButton: React.FC<{
+    label: string;
+    active: boolean;
+    onClick: () => void;
+  }> = ({ label, active, onClick }) => (
+    <button
+      onClick={onClick}
+      style={{
+        padding: '0.375rem 0.75rem',
+        fontSize: 'var(--text-sm)',
+        fontWeight: active ? 600 : 400,
+        backgroundColor: active ? 'var(--rebel-navy)' : 'transparent',
+        color: active ? 'var(--rebel-white)' : 'var(--rebel-gray-600)',
+        border: '1px solid var(--rebel-gray-200)',
+        borderRadius: 'var(--radius-md)',
+        cursor: 'pointer',
+        transition: 'all var(--transition-fast)',
+      }}
+    >
+      {label}
+    </button>
+  );
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Agents</h1>
-          <p className="text-gray-400 mt-1">Manage your AI workforce</p>
-        </div>
-        <Link
-          to="/agents/new"
-          className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          New Agent
-        </Link>
-      </div>
+    <div>
+      <PageHeader
+        title="Agents"
+        subtitle={`${filteredAgents.length} agents in your factory`}
+        action={{
+          label: 'New Agent',
+          icon: '+',
+          onClick: () => {},
+        }}
+      />
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        {/* Search */}
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search agents..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-red-500"
-          />
+      <div style={{
+        display: 'flex',
+        gap: 'var(--space-6)',
+        marginBottom: 'var(--space-6)',
+        flexWrap: 'wrap',
+      }}>
+        <div>
+          <span style={{
+            display: 'block',
+            fontSize: 'var(--text-xs)',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            color: 'var(--rebel-gray-500)',
+            marginBottom: 'var(--space-2)',
+          }}>
+            Tier
+          </span>
+          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <FilterButton label="All" active={filterTier === 'all'} onClick={() => setFilterTier('all')} />
+            <FilterButton label="Core" active={filterTier === 'core'} onClick={() => setFilterTier('core')} />
+            <FilterButton label="Venture" active={filterTier === 'venture'} onClick={() => setFilterTier('venture')} />
+            <FilterButton label="Personal" active={filterTier === 'personal'} onClick={() => setFilterTier('personal')} />
+          </div>
         </div>
 
-        {/* Status Filter */}
-        <div className="flex items-center gap-2">
-          <Filter className="w-5 h-5 text-gray-400" />
-          <div className="flex bg-gray-800 rounded-lg p-1 border border-gray-700">
-            {(['all', 'running', 'idle', 'error'] as const).map((status) => (
-              <button
-                key={status}
-                onClick={() => setStatusFilter(status)}
-                className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
-                  statusFilter === status
-                    ? 'bg-gray-700 text-white'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                {status.charAt(0).toUpperCase() + status.slice(1)} ({statusCounts[status]})
-              </button>
-            ))}
+        <div>
+          <span style={{
+            display: 'block',
+            fontSize: 'var(--text-xs)',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.05em',
+            color: 'var(--rebel-gray-500)',
+            marginBottom: 'var(--space-2)',
+          }}>
+            Status
+          </span>
+          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <FilterButton label="All" active={filterStatus === 'all'} onClick={() => setFilterStatus('all')} />
+            <FilterButton label="Active" active={filterStatus === 'active'} onClick={() => setFilterStatus('active')} />
+            <FilterButton label="Pending" active={filterStatus === 'pending'} onClick={() => setFilterStatus('pending')} />
+            <FilterButton label="Inactive" active={filterStatus === 'inactive'} onClick={() => setFilterStatus('inactive')} />
           </div>
         </div>
       </div>
 
       {/* Agent Grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map(i => (
-            <div key={i} className="bg-gray-800 rounded-xl p-6 animate-pulse border border-gray-700">
-              <div className="w-12 h-12 bg-gray-700 rounded-lg mb-4" />
-              <div className="h-4 bg-gray-700 rounded w-2/3 mb-2" />
-              <div className="h-3 bg-gray-700 rounded w-1/2" />
-            </div>
-          ))}
-        </div>
-      ) : filteredAgents.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredAgents.map(agent => (
-            <AgentCard key={agent.id} agent={agent} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-16">
-          <Bot className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-white mb-2">No agents found</h3>
-          <p className="text-gray-400 mb-6">
-            {search ? 'Try a different search term' : 'Create your first agent to get started'}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+        gap: 'var(--space-4)',
+      }}>
+        {filteredAgents.map((agent) => (
+          <AgentCard
+            key={agent.id}
+            agent={agent}
+            onClick={() => {}}
+          />
+        ))}
+      </div>
+
+      {/* Empty State */}
+      {filteredAgents.length === 0 && (
+        <div style={{
+          textAlign: 'center',
+          padding: 'var(--space-12)',
+          color: 'var(--rebel-gray-500)',
+        }}>
+          <p style={{ fontSize: 'var(--text-lg)', marginBottom: 'var(--space-2)' }}>
+            No agents found
           </p>
-          <Link
-            to="/agents/new"
-            className="inline-flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            Create Agent
-          </Link>
+          <p style={{ fontSize: 'var(--text-sm)' }}>
+            Try adjusting your filters
+          </p>
         </div>
       )}
     </div>
-  )
-}
+  );
+};
