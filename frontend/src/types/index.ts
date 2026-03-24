@@ -39,6 +39,9 @@ export interface Template {
   usageCount?: number;
   rating?: number;
   createdAt?: string;
+  updatedAt?: string;
+  system_prompt?: string;
+  variables?: string[];
 }
 
 export interface Prompt {
@@ -142,6 +145,35 @@ export interface PromptsData {
     totalUses: number;
     avgRating: number;
   };
+}
+
+// Agent Detail types
+export interface AgentRun {
+  id: string;
+  agent_id: string;
+  task_type: string;
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  quality_score?: number;
+  duration_ms?: number;
+  started_at: string;
+  completed_at?: string;
+  input?: Record<string, unknown>;
+  output?: Record<string, unknown>;
+  error?: string;
+  cost?: number;
+}
+
+export interface AgentStats {
+  total_runs: number;
+  successful_runs: number;
+  failed_runs: number;
+  success_rate: number;
+  avg_quality: number;
+  avg_duration_ms: number;
+  total_cost: number;
+  runs_today: number;
+  runs_this_week: number;
+  quality_trend: number;
 }
 
 // Costs types
