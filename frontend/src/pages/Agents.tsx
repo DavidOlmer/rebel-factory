@@ -149,7 +149,7 @@ export const Agents: React.FC = () => {
           <AgentCard
             key={agent.id}
             agent={agent}
-            onClick={() => {}}
+            onClick={() => navigate(`/agents/${agent.id}`)}
           />
         ))}
       </div>
