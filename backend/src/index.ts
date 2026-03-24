@@ -32,6 +32,7 @@ import statsRoutes from './routes/stats';
 import promptRoutes from './routes/prompts';
 import telemetryRoutes from './routes/telemetry';
 import frontendApiRoutes from './routes/frontend-api';
+import templateRoutes from './routes/templates';
 
 const app = express();
 
@@ -77,6 +78,7 @@ app.use('/api/audit', auditRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/prompts', promptRoutes);
 app.use('/api/telemetry', telemetryRoutes);
+app.use('/api/templates', templateRoutes);
 
 // Error handler
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -114,6 +116,7 @@ app.listen(config.port, '0.0.0.0', () => {
   - GET  /api/stats/*
   - REST /api/prompts       (REBAA-33: Prompt Library)
   - REST /api/telemetry/*   (REBAA-34: Telemetry & Insights)
+  - REST /api/templates     (REBAA-21: Agent Templates)
   `);
 });
 
