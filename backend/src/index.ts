@@ -33,6 +33,9 @@ import promptRoutes from './routes/prompts';
 import telemetryRoutes from './routes/telemetry';
 import frontendApiRoutes from './routes/frontend-api';
 import templateRoutes from './routes/templates';
+import { createScoutRoutes } from './routes/scouts';
+import contextHealthRoutes from './routes/context-health';
+import exceptionRoutes from './routes/exceptions';
 
 const app = express();
 
@@ -79,6 +82,10 @@ app.use('/api/stats', statsRoutes);
 app.use('/api/prompts', promptRoutes);
 app.use('/api/telemetry', telemetryRoutes);
 app.use('/api/templates', templateRoutes);
+app.use('/api/agents', createScoutRoutes()); // Scout routes: /api/agents/:id/scout/*
+app.use('/api/scouts', createScoutRoutes()); // Scout info: /api/scouts/types, /api/scouts/presets
+app.use('/api', contextHealthRoutes); // Context Health: /api/agents/:id/context-health, /api/context-health/*
+app.use('/api/exceptions', exceptionRoutes); // DIRA Exception Patterns: /api/exceptions/*
 
 // Error handler
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -117,6 +124,17 @@ app.listen(config.port, '0.0.0.0', () => {
   - REST /api/prompts       (REBAA-33: Prompt Library)
   - REST /api/telemetry/*   (REBAA-34: Telemetry & Insights)
   - REST /api/templates     (REBAA-21: Agent Templates)
+  - POST /api/agents/:id/scout (Scout System - parallel analysis)
+  - GET  /api/scouts/types     (Available scout types)
+  - GET  /api/scouts/presets   (Scout presets)
+  - GET  /api/agents/:id/context-health       (Context Health analysis)
+  - POST /api/agents/:id/context-health/reset (Clear poisoned context)
+  - GET  /api/context-health/overview         (System-wide health)
+  - GET  /api/exceptions/patterns             (DIRA: Discovered patterns)
+  - GET  /api/exceptions/insights             (DIRA: Exception insights)
+  - POST /api/exceptions/:id/resolve          (DIRA: Auto-resolve exception)
+  - POST /api/exceptions/discover             (DIRA: Trigger pattern discovery)
+  - GET  /api/exceptions/stats                (DIRA: Pattern statistics)
   `);
 });
 
