@@ -36,6 +36,14 @@ import templateRoutes from './routes/templates';
 import { createScoutRoutes } from './routes/scouts';
 import contextHealthRoutes from './routes/context-health';
 import exceptionRoutes from './routes/exceptions';
+import { createInstitutionalRoutes } from './routes/institutional';
+import { createMemoryRoutes } from './routes/memory';
+import observabilityRoutes from './routes/observability';
+import sandboxRoutes from './routes/sandbox';
+import credentialsRoutes from './routes/credentials';
+import autonomousDecisionRoutes from './routes/autonomous-decision';
+import codeExecutionRoutes from './routes/code-execution';
+import { pool } from './db/client';
 
 const app = express();
 
@@ -86,6 +94,13 @@ app.use('/api/agents', createScoutRoutes()); // Scout routes: /api/agents/:id/sc
 app.use('/api/scouts', createScoutRoutes()); // Scout info: /api/scouts/types, /api/scouts/presets
 app.use('/api', contextHealthRoutes); // Context Health: /api/agents/:id/context-health, /api/context-health/*
 app.use('/api/exceptions', exceptionRoutes); // DIRA Exception Patterns: /api/exceptions/*
+app.use('/api/institutional', createInstitutionalRoutes(pool)); // Institutional Intelligence: 7 Pillars Framework
+app.use('/api/memory', createMemoryRoutes(() => {})); // Memory Consolidation: Episodic→Semantic transformation
+app.use('/api/observability', observabilityRoutes); // LLM Observability + Quality Gate: traces, metrics, 4-stage review
+app.use('/api/sandbox', sandboxRoutes); // Agent Sandboxing: secure execution boundaries
+app.use('/api/credentials', credentialsRoutes); // Credential Isolation: per-agent credential storage
+app.use('/api/autonomous', autonomousDecisionRoutes); // Autonomous Decision: when to act vs escalate
+app.use('/api/execute', codeExecutionRoutes); // Code Execution: sandboxed code runner
 
 // Error handler
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -135,6 +150,46 @@ app.listen(config.port, '0.0.0.0', () => {
   - POST /api/exceptions/:id/resolve          (DIRA: Auto-resolve exception)
   - POST /api/exceptions/discover             (DIRA: Trigger pattern discovery)
   - GET  /api/exceptions/stats                (DIRA: Pattern statistics)
+  - GET  /api/institutional/assess/:tenantId  (7 Pillars: Full assessment)
+  - GET  /api/institutional/quick/:tenantId   (7 Pillars: Quick health check)
+  - GET  /api/institutional/history/:tenantId (7 Pillars: Trend history)
+  - GET  /api/institutional/pillar/:tenantId/:pillar (7 Pillars: Single pillar detail)
+  - GET  /api/institutional/recommendations/:tenantId (7 Pillars: Prioritized actions)
+  - POST /api/institutional/benchmark/:tenantId (7 Pillars: Industry comparison)
+  - GET  /api/institutional/summary           (7 Pillars: Multi-tenant admin view)
+  - GET  /api/institutional/export/:tenantId  (7 Pillars: Export report)
+  - POST /api/memory/:agentId/episodic        (Memory: Add episodic memory)
+  - POST /api/memory/:agentId/consolidate     (Memory: Run consolidation)
+  - POST /api/memory/consolidate-all          (Memory: Batch consolidation)
+  - GET  /api/memory/:agentId/patterns        (Memory: Get consolidated patterns)
+  - POST /api/memory/:agentId/retrieve        (Memory: Semantic search)
+  - GET  /api/memory/:agentId/stats           (Memory: Agent stats)
+  - GET  /api/memory/overview                 (Memory: System overview)
+  - POST /api/sandbox                         (Sandbox: Create agent sandbox)
+  - GET  /api/sandbox/:agentId                (Sandbox: Get config)
+  - POST /api/sandbox/:agentId/execute        (Sandbox: Execute code)
+  - GET  /api/sandbox/:agentId/tools/:tool    (Sandbox: Check tool permission)
+  - GET  /api/sandbox/:agentId/network/:level (Sandbox: Check network access)
+  - POST /api/credentials/:agentId            (Credentials: Store credential)
+  - GET  /api/credentials/:agentId            (Credentials: List credentials)
+  - GET  /api/credentials/:agentId/:name      (Credentials: Get credential)
+  - POST /api/credentials/:agentId/rotate     (Credentials: Rotate all)
+  - GET  /api/credentials/:agentId/log        (Credentials: Access log)
+  - POST /api/autonomous/decide               (Autonomous: Make decision for context)
+  - POST /api/autonomous/decide/batch         (Autonomous: Batch decisions)
+  - POST /api/autonomous/should-continue      (Autonomous: Check if should continue)
+  - GET  /api/autonomous/policies             (Autonomous: List agent policies)
+  - POST /api/autonomous/policies             (Autonomous: Create/update policy)
+  - GET  /api/autonomous/history              (Autonomous: Decision history)
+  - GET  /api/autonomous/stats                (Autonomous: Decision statistics)
+  - POST /api/execute/execute                 (Execute: Run sandboxed code)
+  - POST /api/execute/validate                (Execute: Validate code)
+  - GET  /api/execute/running                 (Execute: List running executions)
+  - POST /api/execute/kill/:id                (Execute: Kill execution)
+  - GET  /api/execute/metrics                 (Execute: Execution metrics)
+  - GET  /api/execute/languages               (Execute: Supported languages)
+  - POST /api/execute/execute/quick           (Execute: Quick execution)
+  - POST /api/execute/execute/repl            (Execute: REPL-style execution)
   `);
 });
 
