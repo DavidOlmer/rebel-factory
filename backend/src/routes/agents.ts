@@ -273,5 +273,45 @@ export function createAgentRoutes(broadcast: (msg: WSMessage) => void): Router {
     }
   });
 
+  // ============================================
+  // GET AGENT STATS
+  // Aggregated statistics for an agent
+  // ============================================
+  router.get('/:id/stats', async (req: Request, res: Response) => {
+    try {
+      const { id } = AgentIdSchema.parse({ id: req.params.id });
+      
+      // Check if agent exists
+      const agent = await agentService.get(id);
+      if (!agent) {
+        return res.status(404).json({ error: 'Agent not found' });
+      }
+      
+      const stats = await pool.query(`
+        SELECT 
+          COUNT(*)::int as total_runs,
+          COALESCE(AVG(CASE WHEN success THEN 100 ELSE 0 END), 0)::numeric(5,2) as success_rate,
+          COALESCE(AVG(quality_score), 0)::numeric(5,2) as avg_quality,
+          COALESCE(SUM(cost), 0)::numeric(10,4) as total_cost,
+          COALESCE(SUM(input_tokens + output_tokens), 0)::bigint as total_tokens,
+          MIN(started_at) as first_run,
+          MAX(started_at) as last_run
+        FROM agent_runs
+        WHERE agent_id = $1
+      `, [id]);
+      
+      res.json({ 
+        agent_id: id,
+        stats: stats.rows[0] 
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: 'Invalid agent ID', details: error.errors });
+      }
+      console.error('Error getting agent stats:', error);
+      res.status(500).json({ error: 'Failed to get agent stats' });
+    }
+  });
+
   return router;
 }
