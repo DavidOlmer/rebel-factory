@@ -43,9 +43,13 @@ import sandboxRoutes from './routes/sandbox';
 import credentialsRoutes from './routes/credentials';
 import autonomousDecisionRoutes from './routes/autonomous-decision';
 import codeExecutionRoutes from './routes/code-execution';
+import ragRoutes from './routes/rag';
 import { pool } from './db/client';
 
 const app = express();
+
+// Make pool available to routes
+app.set('pool', pool);
 
 // Base middleware
 app.use(cors({
@@ -101,6 +105,7 @@ app.use('/api/sandbox', sandboxRoutes); // Agent Sandboxing: secure execution bo
 app.use('/api/credentials', credentialsRoutes); // Credential Isolation: per-agent credential storage
 app.use('/api/autonomous', autonomousDecisionRoutes); // Autonomous Decision: when to act vs escalate
 app.use('/api/execute', codeExecutionRoutes); // Code Execution: sandboxed code runner
+app.use('/api/rag', ragRoutes); // Hybrid RAG: grep + embeddings (Cursor-style search)
 
 // Error handler
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -190,6 +195,12 @@ app.listen(config.port, '0.0.0.0', () => {
   - GET  /api/execute/languages               (Execute: Supported languages)
   - POST /api/execute/execute/quick           (Execute: Quick execution)
   - POST /api/execute/execute/repl            (Execute: REPL-style execution)
+  - POST /api/rag/search                      (RAG: Hybrid grep + semantic search)
+  - GET  /api/rag/index                       (RAG: Index status)
+  - POST /api/rag/index                       (RAG: Trigger indexing)
+  - DELETE /api/rag/cache                     (RAG: Clear embedding cache)
+  - GET  /api/rag/history                     (RAG: Search history)
+  - POST /api/rag/explain                     (RAG: Explain result match)
   `);
 });
 
