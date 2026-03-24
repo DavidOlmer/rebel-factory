@@ -1,184 +1,429 @@
-import { useParams, Link } from 'react-router-dom'
-import { Bot, ArrowLeft, Play, Pause, Settings, Trash2, Activity } from 'lucide-react'
-import { useAgent, useSprints } from '../hooks/useApi'
-import QualityGate from '../components/QualityGate'
-import type { Agent, Sprint } from '../types'
+import React, { useState } from 'react';
+import { useApi, apiPost } from '../hooks/useApi';
+import { Card, CardHeader } from '../components/ui/Card';
+import { Badge } from '../components/ui/Badge';
+import { ProgressBar } from '../components/ui/ProgressBar';
+import { StatCard } from '../components/ui/StatCard';
+import { Button } from '../components/ui/Button';
+import { useNavigation } from '../App';
+import type { Agent, AgentRun, AgentStats, Tier, Status } from '../types';
 
-// Mock data
-const mockAgent: Agent = {
-  id: '1',
-  name: 'CodeReviewer',
-  template: 'reviewer',
-  status: 'running',
-  createdAt: '2024-01-15T10:30:00Z',
-  lastActivity: '2024-01-20T14:22:00Z',
-  config: {
-    model: 'claude-3-opus',
-    maxTokens: 4096,
-    reviewDepth: 'thorough',
-  },
+interface AgentDetailProps {
+  agentId: string;
 }
 
-const mockSprints: Sprint[] = [
-  {
-    id: '1',
-    agentId: '1',
-    agentName: 'CodeReviewer',
-    task: 'Review authentication refactor PR',
-    status: 'completed',
-    qualityGates: [
-      { name: 'Lint', status: 'passed' },
-      { name: 'Tests', status: 'passed' },
-      { name: 'Security', status: 'passed' },
-    ],
-    createdAt: '2024-01-20T10:00:00Z',
-    completedAt: '2024-01-20T10:45:00Z',
-  },
-  {
-    id: '2',
-    agentId: '1',
-    agentName: 'CodeReviewer',
-    task: 'Review database migration PR',
-    status: 'in_progress',
-    qualityGates: [
-      { name: 'Lint', status: 'passed' },
-      { name: 'Tests', status: 'pending' },
-      { name: 'Security', status: 'pending' },
-    ],
-    createdAt: '2024-01-20T14:00:00Z',
-  },
-]
+// Loading skeleton component
+const LoadingSkeleton: React.FC = () => (
+  <div style={{ padding: 'var(--space-6)' }}>
+    <div style={{ 
+      height: '2rem', 
+      width: '200px', 
+      backgroundColor: 'var(--rebel-gray-200)',
+      borderRadius: 'var(--radius-md)',
+      marginBottom: 'var(--space-4)',
+      animation: 'pulse 1.5s infinite',
+    }} />
+    <div style={{ 
+      display: 'grid', 
+      gridTemplateColumns: 'repeat(4, 1fr)', 
+      gap: 'var(--space-4)',
+      marginBottom: 'var(--space-6)',
+    }}>
+      {[1, 2, 3, 4].map(i => (
+        <div key={i} style={{
+          height: '100px',
+          backgroundColor: 'var(--rebel-gray-100)',
+          borderRadius: 'var(--radius-lg)',
+          animation: 'pulse 1.5s infinite',
+        }} />
+      ))}
+    </div>
+  </div>
+);
 
-export default function AgentDetail() {
-  const { id } = useParams<{ id: string }>()
-  const { data: agent } = useAgent(id || '')
-  const { data: allSprints } = useSprints()
+// Run status badge component
+const RunStatusBadge: React.FC<{ status: AgentRun['status'] }> = ({ status }) => {
+  const statusConfig: Record<AgentRun['status'], { color: string; bg: string }> = {
+    pending: { color: 'var(--rebel-gold)', bg: 'rgba(206, 152, 78, 0.1)' },
+    running: { color: 'var(--rebel-blue)', bg: 'rgba(49, 103, 177, 0.1)' },
+    completed: { color: 'var(--rebel-cyan)', bg: 'rgba(19, 191, 203, 0.1)' },
+    failed: { color: 'var(--rebel-red)', bg: 'rgba(239, 64, 53, 0.1)' },
+    cancelled: { color: 'var(--rebel-gray-500)', bg: 'var(--rebel-gray-100)' },
+  };
 
-  const displayAgent = agent || mockAgent
-  const agentSprints = allSprints?.filter(s => s.agentId === id) || mockSprints
+  const config = statusConfig[status];
 
-  const statusColors: Record<string, string> = {
-    running: 'text-green-400 bg-green-500/20',
-    idle: 'text-gray-400 bg-gray-500/20',
-    error: 'text-red-400 bg-red-500/20',
+  return (
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      padding: '0.25rem 0.625rem',
+      fontSize: 'var(--text-xs)',
+      fontWeight: 600,
+      textTransform: 'uppercase',
+      letterSpacing: '0.025em',
+      borderRadius: 'var(--radius-full)',
+      backgroundColor: config.bg,
+      color: config.color,
+    }}>
+      {status}
+    </span>
+  );
+};
+
+export const AgentDetail: React.FC<AgentDetailProps> = ({ agentId }) => {
+  const { navigate } = useNavigation();
+  const [startingRun, setStartingRun] = useState(false);
+  
+  // API calls
+  const { data: agent, loading: agentLoading, refetch: refetchAgent } = useApi<Agent>(`/agents/${agentId}`);
+  const { data: runsData, loading: runsLoading, refetch: refetchRuns } = useApi<{ runs: AgentRun[] }>(`/agents/${agentId}/runs?limit=10`);
+  const { data: stats, loading: statsLoading } = useApi<AgentStats>(`/agents/${agentId}/stats`);
+
+  const loading = agentLoading || runsLoading || statsLoading;
+  const runs = runsData?.runs || [];
+
+  // Start a new run
+  const handleStartRun = async () => {
+    setStartingRun(true);
+    try {
+      await apiPost(`/agents/${agentId}/runs`, { task_type: 'default' });
+      await refetchRuns();
+      await refetchAgent();
+    } catch (error) {
+      console.error('Failed to start run:', error);
+    } finally {
+      setStartingRun(false);
+    }
+  };
+
+  // Format duration
+  const formatDuration = (ms?: number): string => {
+    if (!ms) return '-';
+    if (ms < 1000) return `${ms}ms`;
+    if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+    return `${(ms / 60000).toFixed(1)}m`;
+  };
+
+  // Format relative time
+  const formatTime = (dateStr: string): string => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
+  };
+
+  if (loading) return <LoadingSkeleton />;
+
+  if (!agent) {
+    return (
+      <div style={{ padding: 'var(--space-6)', textAlign: 'center' }}>
+        <h2 style={{ color: 'var(--rebel-gray-500)' }}>Agent not found</h2>
+        <Button variant="ghost" onClick={() => navigate('/agents')} style={{ marginTop: 'var(--space-4)' }}>
+          ← Back to Agents
+        </Button>
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Back link */}
-      <Link
-        to="/agents"
-        className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+    <div style={{ padding: 'var(--space-6)' }}>
+      {/* Back button */}
+      <button
+        onClick={() => navigate('/agents')}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--space-2)',
+          background: 'none',
+          border: 'none',
+          color: 'var(--rebel-gray-500)',
+          cursor: 'pointer',
+          fontSize: 'var(--text-sm)',
+          marginBottom: 'var(--space-4)',
+          padding: 0,
+        }}
       >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Agents
-      </Link>
+        ← Back to Agents
+      </button>
 
       {/* Header */}
-      <div className="bg-gray-800 rounded-xl p-6 border border-gray-700">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-red-500/20 rounded-xl flex items-center justify-center">
-              <Bot className="w-8 h-8 text-red-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">{displayAgent.name}</h1>
-              <p className="text-gray-400">Template: {displayAgent.template}</p>
-              <div className="flex items-center gap-3 mt-2">
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${statusColors[displayAgent.status]}`}>
-                  {displayAgent.status}
-                </span>
-                <span className="text-gray-500 text-sm">
-                  Created {new Date(displayAgent.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex items-center gap-2">
-            {displayAgent.status === 'running' ? (
-              <button className="flex items-center gap-2 px-4 py-2 bg-yellow-500/20 text-yellow-400 rounded-lg hover:bg-yellow-500/30 transition-colors">
-                <Pause className="w-4 h-4" />
-                Pause
-              </button>
-            ) : (
-              <button className="flex items-center gap-2 px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors">
-                <Play className="w-4 h-4" />
-                Start
-              </button>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 'var(--space-6)',
+      }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+            {agent.emoji && (
+              <span style={{ fontSize: '2rem' }}>{agent.emoji}</span>
             )}
-            <button className="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-lg transition-colors">
-              <Settings className="w-5 h-5" />
-            </button>
-            <button className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
-              <Trash2 className="w-5 h-5" />
-            </button>
+            <h1 style={{
+              fontSize: 'var(--text-2xl)',
+              fontWeight: 700,
+              fontFamily: 'var(--font-headline)',
+              color: 'var(--rebel-navy)',
+              margin: 0,
+            }}>
+              {agent.name}
+            </h1>
           </div>
+          {agent.description && (
+            <p style={{
+              color: 'var(--rebel-gray-600)',
+              marginTop: 'var(--space-2)',
+              fontSize: 'var(--text-base)',
+            }}>
+              {agent.description}
+            </p>
+          )}
+          {agent.creature && (
+            <p style={{
+              color: 'var(--rebel-gray-400)',
+              marginTop: 'var(--space-1)',
+              fontSize: 'var(--text-sm)',
+              fontStyle: 'italic',
+            }}>
+              {agent.creature}
+            </p>
+          )}
+        </div>
+        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <Badge variant="tier" tier={agent.tier as Tier} />
+          <Badge variant="status" status={agent.status as Status} />
         </div>
       </div>
 
-      {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Config */}
-        <div className="bg-gray-800 rounded-xl border border-gray-700">
-          <div className="p-4 border-b border-gray-700">
-            <h2 className="font-semibold text-white">Configuration</h2>
-          </div>
-          <div className="p-4 space-y-3">
-            {Object.entries(displayAgent.config).map(([key, value]) => (
-              <div key={key} className="flex justify-between items-center">
-                <span className="text-gray-400 text-sm">{key}</span>
-                <span className="text-white font-mono text-sm">{String(value)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* Stats Grid */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, 1fr)',
+        gap: 'var(--space-4)',
+        marginBottom: 'var(--space-6)',
+      }}>
+        <StatCard
+          label="Total Runs"
+          value={stats?.total_runs ?? agent.totalRuns ?? 0}
+          trend={stats?.runs_this_week}
+          trendLabel="this week"
+          icon="⚡"
+        />
+        <StatCard
+          label="Success Rate"
+          value={`${stats?.success_rate ?? 0}%`}
+          icon="✅"
+          color={stats?.success_rate && stats.success_rate >= 90 ? 'success' : 'default'}
+        />
+        <StatCard
+          label="Avg Quality"
+          value={`${stats?.avg_quality ?? agent.avgQuality ?? 0}%`}
+          trend={stats?.quality_trend}
+          trendLabel="vs last week"
+          icon="✨"
+        />
+        <StatCard
+          label="Total Cost"
+          value={`€${(stats?.total_cost ?? 0).toFixed(2)}`}
+          icon="💰"
+        />
+      </div>
 
-        {/* Sprints */}
-        <div className="lg:col-span-2 bg-gray-800 rounded-xl border border-gray-700">
-          <div className="p-4 border-b border-gray-700 flex items-center justify-between">
-            <h2 className="font-semibold text-white">Recent Sprints</h2>
-            <Activity className="w-5 h-5 text-gray-400" />
-          </div>
-          <div className="divide-y divide-gray-700">
-            {agentSprints.map((sprint) => (
-              <div key={sprint.id} className="p-4">
-                <div className="flex items-start justify-between mb-3">
-                  <div>
-                    <p className="font-medium text-white">{sprint.task}</p>
-                    <p className="text-sm text-gray-400">
-                      {new Date(sprint.createdAt).toLocaleString()}
-                    </p>
-                  </div>
-                  <SprintStatus status={sprint.status} />
-                </div>
-                <div className="flex gap-2">
-                  {sprint.qualityGates.map((gate) => (
-                    <QualityGate key={gate.name} gate={gate} compact />
-                  ))}
-                </div>
-              </div>
+      {/* Quality Score Card */}
+      <Card style={{ marginBottom: 'var(--space-6)' }}>
+        <CardHeader title="Quality Score" />
+        <div style={{ marginTop: 'var(--space-2)' }}>
+          <ProgressBar
+            value={agent.qualityScore ?? stats?.avg_quality ?? 0}
+            max={100}
+            showValue
+            size="lg"
+            color={
+              (agent.qualityScore ?? 0) >= 90 ? 'success' :
+              (agent.qualityScore ?? 0) >= 70 ? 'warning' : 'danger'
+            }
+          />
+        </div>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          marginTop: 'var(--space-3)',
+          fontSize: 'var(--text-sm)',
+          color: 'var(--rebel-gray-500)',
+        }}>
+          <span>Model: {agent.model || 'claude-3-opus'}</span>
+          <span>Last run: {agent.lastRun ? formatTime(agent.lastRun) : 'Never'}</span>
+        </div>
+      </Card>
+
+      {/* Skills */}
+      {agent.skills && agent.skills.length > 0 && (
+        <Card style={{ marginBottom: 'var(--space-6)' }}>
+          <CardHeader title="Skills" />
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+            {agent.skills.map(skill => (
+              <span
+                key={skill}
+                style={{
+                  padding: '0.375rem 0.75rem',
+                  backgroundColor: 'var(--rebel-gray-100)',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: 'var(--text-sm)',
+                  color: 'var(--rebel-gray-700)',
+                }}
+              >
+                {skill}
+              </span>
             ))}
           </div>
-        </div>
+        </Card>
+      )}
+
+      {/* Recent Runs */}
+      <Card style={{ marginBottom: 'var(--space-6)' }}>
+        <CardHeader 
+          title="Recent Runs" 
+          subtitle={`${runs.length} of ${stats?.total_runs ?? 0} total`}
+        />
+        {runs.length === 0 ? (
+          <p style={{ 
+            color: 'var(--rebel-gray-400)', 
+            textAlign: 'center',
+            padding: 'var(--space-6)',
+          }}>
+            No runs yet. Start a run to see activity.
+          </p>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{
+                  textAlign: 'left',
+                  fontSize: 'var(--text-xs)',
+                  color: 'var(--rebel-gray-500)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}>
+                  <th style={{ padding: 'var(--space-2) var(--space-3)', fontWeight: 600 }}>Task</th>
+                  <th style={{ padding: 'var(--space-2) var(--space-3)', fontWeight: 600 }}>Status</th>
+                  <th style={{ padding: 'var(--space-2) var(--space-3)', fontWeight: 600 }}>Quality</th>
+                  <th style={{ padding: 'var(--space-2) var(--space-3)', fontWeight: 600 }}>Duration</th>
+                  <th style={{ padding: 'var(--space-2) var(--space-3)', fontWeight: 600 }}>Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {runs.map((run, index) => (
+                  <tr
+                    key={run.id}
+                    style={{
+                      borderTop: index > 0 ? '1px solid var(--rebel-gray-100)' : 'none',
+                    }}
+                  >
+                    <td style={{
+                      padding: 'var(--space-3)',
+                      fontSize: 'var(--text-sm)',
+                      color: 'var(--rebel-gray-700)',
+                    }}>
+                      {run.task_type}
+                    </td>
+                    <td style={{ padding: 'var(--space-3)' }}>
+                      <RunStatusBadge status={run.status} />
+                    </td>
+                    <td style={{
+                      padding: 'var(--space-3)',
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 600,
+                      color: run.quality_score 
+                        ? run.quality_score >= 90 ? 'var(--rebel-cyan)' 
+                        : run.quality_score >= 70 ? 'var(--rebel-gold)'
+                        : 'var(--rebel-coral)'
+                        : 'var(--rebel-gray-400)',
+                    }}>
+                      {run.quality_score ? `${run.quality_score}%` : '-'}
+                    </td>
+                    <td style={{
+                      padding: 'var(--space-3)',
+                      fontSize: 'var(--text-sm)',
+                      color: 'var(--rebel-gray-600)',
+                      fontFamily: 'var(--font-mono, monospace)',
+                    }}>
+                      {formatDuration(run.duration_ms)}
+                    </td>
+                    <td style={{
+                      padding: 'var(--space-3)',
+                      fontSize: 'var(--text-sm)',
+                      color: 'var(--rebel-gray-500)',
+                    }}>
+                      {formatTime(run.started_at)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      {/* Action Buttons */}
+      <div style={{
+        display: 'flex',
+        gap: 'var(--space-3)',
+        marginTop: 'var(--space-6)',
+      }}>
+        <Button
+          variant="primary"
+          onClick={handleStartRun}
+          loading={startingRun}
+          disabled={agent.status !== 'active' && agent.status !== 'idle'}
+          icon={<span>▶️</span>}
+        >
+          Start Run
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={() => navigate(`/agents/${agentId}/edit`)}
+          icon={<span>✏️</span>}
+        >
+          Edit
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => navigate(`/agents/${agentId}/history`)}
+          icon={<span>📊</span>}
+        >
+          Full History
+        </Button>
+      </div>
+
+      {/* Agent Metadata Footer */}
+      <div style={{
+        marginTop: 'var(--space-8)',
+        padding: 'var(--space-4)',
+        backgroundColor: 'var(--rebel-gray-50)',
+        borderRadius: 'var(--radius-md)',
+        fontSize: 'var(--text-xs)',
+        color: 'var(--rebel-gray-500)',
+        display: 'flex',
+        justifyContent: 'space-between',
+      }}>
+        <span>ID: {agent.id}</span>
+        {agent.createdAt && (
+          <span>Created: {new Date(agent.createdAt).toLocaleDateString()}</span>
+        )}
+        {agent.updatedAt && (
+          <span>Updated: {new Date(agent.updatedAt).toLocaleDateString()}</span>
+        )}
       </div>
     </div>
-  )
-}
+  );
+};
 
-function SprintStatus({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    completed: 'bg-green-500/20 text-green-400',
-    in_progress: 'bg-yellow-500/20 text-yellow-400',
-    review: 'bg-blue-500/20 text-blue-400',
-    planning: 'bg-purple-500/20 text-purple-400',
-    failed: 'bg-red-500/20 text-red-400',
-  }
-
-  return (
-    <span className={`px-3 py-1 rounded-full text-xs font-medium ${styles[status]}`}>
-      {status.replace('_', ' ')}
-    </span>
-  )
-}
+export default AgentDetail;
