@@ -1,0 +1,25 @@
+{
+  "name": "rebel-factory-cloudflare",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:migrate:local": "wrangler d1 execute rebel-factory --local --file=src/db/schema.sql",
+    "db:migrate:remote": "wrangler d1 execute rebel-factory --remote --file=src/db/schema.sql",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^3.0.64",
+    "@ai-sdk/openai": "^3.0.48",
+    "@cloudflare/workers-types": "^4.20260317.1",
+    "agents": "^0.8.2",
+    "ai": "^6.0.138",
+    "workers-ai-provider": "^3.1.7",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.2",
+    "wrangler": "^4.77.0"
+  }
+}

@@ -1,0 +1,45 @@
+name = "rebel-factory"
+main = "src/index.ts"
+compatibility_date = "2025-03-25"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "../frontend/dist"
+
+[ai]
+binding = "AI"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "rebel-factory"
+database_id = "TODO"  # wrangler d1 create rebel-factory
+
+[[r2_buckets]]
+binding = "STORAGE"
+bucket_name = "rebel-factory-storage"
+
+[[kv_namespaces]]
+binding = "CACHE"
+id = "TODO"  # wrangler kv namespace create CACHE
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["SessionAgent"]
+
+[durable_objects]
+bindings = [
+  { name = "SESSION_AGENT", class_name = "SessionAgent" },
+]
+
+[[queues.producers]]
+queue = "rebel-factory-jobs"
+binding = "JOB_QUEUE"
+
+[[queues.consumers]]
+queue = "rebel-factory-jobs"
+max_batch_size = 5
+max_batch_timeout = 3
+max_retries = 3
+
+[observability]
+enabled = true
