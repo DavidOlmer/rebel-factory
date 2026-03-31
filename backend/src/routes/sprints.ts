@@ -121,3 +121,5 @@ export function createSprintRoutes(broadcast: (msg: WSMessage) => void): Router 
 
   return router;
 }
+
+export default createSprintRoutes(() => {});

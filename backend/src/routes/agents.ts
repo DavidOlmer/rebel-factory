@@ -315,3 +315,5 @@ export function createAgentRoutes(broadcast: (msg: WSMessage) => void): Router {
 
   return router;
 }
+
+export default createAgentRoutes(() => {});

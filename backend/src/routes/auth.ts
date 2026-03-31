@@ -130,7 +130,7 @@ router.get('/callback', async (req: Request, res: Response) => {
       throw new Error(`Graph API error: ${graphResponse.status}`);
     }
     
-    const msUser: MicrosoftUser = await graphResponse.json();
+    const msUser = await graphResponse.json() as MicrosoftUser;
     
     // Create session user
     const sessionUser: SessionUser = {

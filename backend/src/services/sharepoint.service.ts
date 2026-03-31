@@ -243,7 +243,7 @@ export class SharePointService {
         throw new Error(`Chunk upload failed: ${response.status} ${response.statusText}`);
       }
 
-      const json = await response.json();
+      const json = await response.json() as Partial<DriveItem>;
       
       // Last chunk returns the created item
       if (json.id) {

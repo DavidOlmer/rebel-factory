@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { ApprovalItem } from '../components/features/ApprovalItem';
 import { Card, CardHeader } from '../components/ui/Card';
-import { Badge } from '../components/ui/Badge';
 import type { Approval } from '../types';
 
 // Mock data

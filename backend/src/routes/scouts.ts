@@ -16,4 +16,8 @@ router.post('/:agentId/scout', async (req, res) => {
   res.json({ results, synthesis });
 });
 
+export function createScoutRoutes(): Router {
+  return router;
+}
+
 export default router;

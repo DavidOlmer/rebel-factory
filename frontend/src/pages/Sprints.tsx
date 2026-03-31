@@ -72,7 +72,7 @@ const mockSprints: Sprint[] = [
   },
 ]
 
-const columns = [
+const columns: Array<{ id: Sprint['status']; label: string; icon: typeof Clock; color: string }> = [
   { id: 'planning', label: 'Planning', icon: Clock, color: 'border-purple-500' },
   { id: 'in_progress', label: 'In Progress', icon: Loader, color: 'border-yellow-500' },
   { id: 'review', label: 'Review', icon: Eye, color: 'border-blue-500' },

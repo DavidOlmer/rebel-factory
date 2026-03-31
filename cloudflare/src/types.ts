@@ -13,6 +13,11 @@ export interface Env {
   // LLM keys
   OPENAI_API_KEY?: string;
   ANTHROPIC_API_KEY?: string;
+  OPENAI_CLIENT_ID?: string;
+  OPENAI_CLIENT_SECRET?: string;
+  ANTHROPIC_CLIENT_ID?: string;
+  ANTHROPIC_CLIENT_SECRET?: string;
+  APP_URL?: string;
   // Encryption
   ENCRYPTION_KEY?: string;
 }
@@ -29,6 +34,7 @@ export interface SessionUser {
 export type AgentTier = "personal" | "venture" | "core";
 export type AgentStatus = "draft" | "active" | "archived";
 export type Role = "admin" | "venture_lead" | "consultant" | "viewer";
+export type ModelProvider = "openai" | "anthropic";
 
 export interface Agent {
   id: string;

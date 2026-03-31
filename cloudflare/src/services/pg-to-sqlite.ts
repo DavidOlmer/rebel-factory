@@ -1,4 +1,3 @@
-```json
-{
-  "code": "function convertPostgresTypeToD1Type(postgresType: string): string {\n  const typeMapping: { [key: string]: string } = {\n    'SERIAL': 'INTEGER',\n    'INTEGER': 'INTEGER',\n    'VARCHAR': 'TEXT',\n    'TEXT': 'TEXT',\n    'TIMESTAMP': 'TEXT',\n    'BOOLEAN': 'INTEGER',\n    'UUID': 'TEXT',\n    'JSONB': 'TEXT',\n    'NUMERIC': 'REAL'\n  };\n  const match = postgresType.match(/^([A-Za-z]+)(?:\\([0-9]+\\))?$/);\n  if (match) {\n    const baseType = match[1].toUpperCase();\n    return typeMapping[baseType] || 'TEXT';\n  } else {\n    return 'TEXT';\n  }\n}",
-  "explanation": "This TypeScript function takes a PostgreSQL column type as input and returns the equivalent D1-compatible SQLite type. It uses a type mapping object to handle the conversions and regular expression to extract the
+export function convertPostgresToSqlite(sql: string): string {
+  return sql;
+}

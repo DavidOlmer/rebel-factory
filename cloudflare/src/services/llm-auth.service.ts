@@ -1,4 +1,4 @@
-import type { Env, ModelProvider } from "./types.js";
+import type { Env, ModelProvider } from "../types.js";
 
 interface Credential {
   id: string;

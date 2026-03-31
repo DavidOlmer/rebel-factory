@@ -1,2 +1,7 @@
-{
-  "code": "// Import required modules\nimport { getScoutReports, storeScoutReports } from './scout-reports.js';\n\n// Define the Scout interface\ninterface ScoutResult {\n  score: number;\n  findings: { description: string; severity: string }[];\n  recommendations: string[];\n}\n\n// Define the QualityScout class\nclass QualityScout {\n  async run(context: any): Promise<ScoutResult> {\n    // Implement quality scout logic here\n    return {\n      score: 80,\n      findings: [{ description: 'Quality finding 1', severity: 'low' }],\n      recommendations: ['Improve code quality'],\n    };\n  }\n}\n\n// Define the SecurityScout class\nclass SecurityScout {\n  async run(context: any): Promise<ScoutResult> {\n    // Implement security scout logic here\n    return {\n      score: 90,\n      findings: [{ description: 'Security finding 1', severity: 'high' }],\n      recommendations: ['Implement security measures'],\n    };\n  }\n}\n
+export const scoutService = {
+  async run(): Promise<unknown[]> {
+    return [];
+  },
+};
+
+export default scoutService;

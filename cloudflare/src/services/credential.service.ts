@@ -1,2 +1,7 @@
-{
-  "code": "import { AES_GCM } from 'crypto';\nimport { D1Database } from '@cloudflare/d1';\nexport default {\n  async fetch(request, env) {\n    const db = await D1Database.new(env.DB);\n    const url = new URL(request.url);\n    const agentId = url.searchParams.get('agentId');\n    const credentialName = url.searchParams.get('name');\n    const operation = url.searchParams.get('operation');\n    const op = request.method;\n\n    if (request.method === 'POST') {\n      const { name, value, allowedOps } = await request.json();\n      return await storeCredential(db, agentId, name, value, allowedOps, env);\n    } else if (request.method === 'GET') {\n      if (credentialName && operation) {\n        return await getCredential(db, agentId, credentialName, operation, env);\n      } else if (credentialName) {\n        return await listCredentials(db, agentId);\n      }\n    } else if (request.method === 'DELETE') {\n      return await revokeCredential(db,
+export const credentialService = {
+  async list(): Promise<unknown[]> {
+    return [];
+  },
+};
+
+export default credentialService;

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PageHeader } from '../components/layout/PageHeader';
 import { PromptCard } from '../components/features/PromptCard';
-import type { Prompt, Category } from '../types';
+import type { Prompt } from '../types';
 
 // Mock data
 const mockPrompts: Prompt[] = [

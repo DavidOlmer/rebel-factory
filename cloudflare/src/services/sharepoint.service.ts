@@ -1,2 +1,7 @@
-{
-  "code": "// SharePoint integration service for Cloudflare Workers\nimport { SharePointError } from './SharePointError';\n\nconst GRAPH_API_URL = 'https://graph.microsoft.com/v1.0';\n\ninterface SharePointService {\n  listSites: (accessToken: string) => Promise<any[]>;\n  listDrives: (siteId: string, accessToken: string) => Promise<any[]>;\n  uploadFile: (driveId: string, path: string, content: ArrayBuffer, accessToken: string) => Promise<string>;\n  downloadFile: (driveId: string, itemId: string, accessToken: string) => Promise<ArrayBuffer>;\n}\n\nclass SharePointServiceImpl implements SharePointService {\n  async listSites(accessToken: string): Promise<any[]> {\n    const response = await fetch(`${GRAPH_API_URL}/sites`, {\n      headers: {\n        Authorization: `Bearer ${accessToken}`\n      }\n    });\n    if (!response.ok) {\n      throw new SharePointError(response.status, response.statusText);\n    }\n    return response.json();\n  }\n\n
+export const sharepointService = {
+  async list(): Promise<unknown[]> {
+    return [];
+  },
+};
+
+export default sharepointService;
