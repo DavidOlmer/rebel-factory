@@ -167,7 +167,7 @@ export class EntraAuthProvider {
         throw new Error(`Graph API error: ${response.status}`);
       }
 
-      return await response.json();
+      return await response.json() as MicrosoftUserProfile;
     } catch (error) {
       console.error('[Entra] Failed to fetch user profile:', error);
       return null;
@@ -189,10 +189,14 @@ export class EntraAuthProvider {
         return [];
       }
 
-      const data = await response.json();
+      const data = await response.json() as {
+        value?: Array<{ '@odata.type'?: string; displayName?: string }>;
+      };
+
       return data.value
-        ?.filter((item: any) => item['@odata.type'] === '#microsoft.graph.group')
-        .map((group: any) => group.displayName) || [];
+        ?.filter((item) => item['@odata.type'] === '#microsoft.graph.group')
+        .map((group) => group.displayName)
+        .filter((groupName): groupName is string => Boolean(groupName)) || [];
     } catch {
       return [];
     }

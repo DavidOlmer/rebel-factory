@@ -87,6 +87,7 @@ export interface SessionUser {
   name: string;
   roles: string[];
   azureId: string;
+  tenantId?: string;
 }
 
 export default msalConfig;

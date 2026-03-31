@@ -10,14 +10,17 @@ interface AgentCardProps {
 }
 
 export const AgentCard: React.FC<AgentCardProps> = ({ agent, onClick }) => {
-  const qualityColor = 
-    agent.qualityScore >= 90 ? 'success' :
-    agent.qualityScore >= 70 ? 'default' :
-    agent.qualityScore >= 50 ? 'warning' : 'danger';
+  const qualityScore = agent.qualityScore ?? 0;
+  const runCount = agent.runCount ?? 0;
+  const costPerRun = agent.costPerRun ?? 0;
+
+  const qualityColor =
+    qualityScore >= 90 ? 'success' :
+    qualityScore >= 70 ? 'default' :
+    qualityScore >= 50 ? 'warning' : 'danger';
 
   return (
     <Card hoverable onClick={onClick}>
-      {/* Header */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -41,13 +44,12 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent, onClick }) => {
             WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
           }}>
-            {agent.description}
+            {agent.description ?? 'No description provided.'}
           </p>
         </div>
         <Badge variant="status" status={agent.status} />
       </div>
 
-      {/* Badges */}
       <div style={{
         display: 'flex',
         gap: 'var(--space-2)',
@@ -58,10 +60,9 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent, onClick }) => {
         <Badge variant="category" category={agent.category} />
       </div>
 
-      {/* Quality Score */}
       <div style={{ marginBottom: 'var(--space-3)' }}>
         <ProgressBar
-          value={agent.qualityScore}
+          value={qualityScore}
           max={100}
           label="Quality Score"
           showValue
@@ -70,7 +71,6 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent, onClick }) => {
         />
       </div>
 
-      {/* Stats */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -81,13 +81,13 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent, onClick }) => {
         <div>
           <span style={{ color: 'var(--rebel-gray-400)' }}>Runs: </span>
           <span style={{ fontWeight: 600, color: 'var(--rebel-navy)' }}>
-            {agent.runCount.toLocaleString()}
+            {runCount.toLocaleString()}
           </span>
         </div>
         <div>
           <span style={{ color: 'var(--rebel-gray-400)' }}>Cost/run: </span>
           <span style={{ fontWeight: 600, color: 'var(--rebel-navy)' }}>
-            €{agent.costPerRun.toFixed(3)}
+            EUR {costPerRun.toFixed(3)}
           </span>
         </div>
       </div>

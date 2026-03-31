@@ -12,10 +12,12 @@ interface ApprovalItemProps {
 }
 
 const typeIcons: Record<Approval['type'], string> = {
-  agent: '🤖',
-  template: '📋',
-  prompt: '💬',
-  budget: '💰',
+  agent: 'AI',
+  template: 'TPL',
+  prompt: 'PRM',
+  budget: 'EUR',
+  agent_promotion: 'UP',
+  template_publish: 'PUB',
 };
 
 const typeLabels: Record<Approval['type'], string> = {
@@ -23,6 +25,8 @@ const typeLabels: Record<Approval['type'], string> = {
   template: 'New Template',
   prompt: 'Prompt Update',
   budget: 'Budget Request',
+  agent_promotion: 'Agent Promotion',
+  template_publish: 'Template Publish',
 };
 
 export const ApprovalItem: React.FC<ApprovalItemProps> = ({
@@ -31,7 +35,9 @@ export const ApprovalItem: React.FC<ApprovalItemProps> = ({
   onReject,
   loading = false,
 }) => {
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return 'Unknown time';
+
     const date = new Date(dateStr);
     return date.toLocaleDateString('nl-NL', {
       day: 'numeric',
@@ -48,7 +54,6 @@ export const ApprovalItem: React.FC<ApprovalItemProps> = ({
         gap: 'var(--space-4)',
         alignItems: 'flex-start',
       }}>
-        {/* Icon */}
         <div style={{
           width: '2.5rem',
           height: '2.5rem',
@@ -57,15 +62,14 @@ export const ApprovalItem: React.FC<ApprovalItemProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: 'var(--text-lg)',
+          fontSize: 'var(--text-sm)',
+          fontWeight: 700,
           flexShrink: 0,
         }}>
           {typeIcons[approval.type]}
         </div>
 
-        {/* Content */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          {/* Header */}
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -90,7 +94,7 @@ export const ApprovalItem: React.FC<ApprovalItemProps> = ({
                 }}>
                   {typeLabels[approval.type]}
                 </span>
-                <Badge variant="tier" tier={approval.tier} />
+                {approval.tier && <Badge variant="tier" tier={approval.tier} />}
               </div>
               <h3 style={{
                 fontSize: 'var(--text-base)',
@@ -100,7 +104,7 @@ export const ApprovalItem: React.FC<ApprovalItemProps> = ({
                 {approval.title}
               </h3>
             </div>
-            
+
             {approval.estimatedCost !== undefined && (
               <div style={{
                 textAlign: 'right',
@@ -118,22 +122,20 @@ export const ApprovalItem: React.FC<ApprovalItemProps> = ({
                   fontWeight: 600,
                   color: 'var(--rebel-navy)',
                 }}>
-                  €{approval.estimatedCost.toLocaleString()}
+                  EUR {approval.estimatedCost.toLocaleString()}
                 </span>
               </div>
             )}
           </div>
 
-          {/* Description */}
           <p style={{
             fontSize: 'var(--text-sm)',
             color: 'var(--rebel-gray-600)',
             marginBottom: 'var(--space-3)',
           }}>
-            {approval.description}
+            {approval.description ?? 'No description provided.'}
           </p>
 
-          {/* Meta & Actions */}
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
@@ -145,7 +147,7 @@ export const ApprovalItem: React.FC<ApprovalItemProps> = ({
               fontSize: 'var(--text-sm)',
               color: 'var(--rebel-gray-400)',
             }}>
-              Requested by <span style={{ color: 'var(--rebel-gray-600)' }}>{approval.requestedBy}</span>
+              Requested by <span style={{ color: 'var(--rebel-gray-600)' }}>{approval.requestedBy ?? 'Unknown requester'}</span>
               {' • '}
               {formatDate(approval.requestedAt)}
             </div>
@@ -167,7 +169,7 @@ export const ApprovalItem: React.FC<ApprovalItemProps> = ({
                 onClick={onApprove}
                 loading={loading}
               >
-                ✓ Approve
+                Approve
               </Button>
             </div>
           </div>

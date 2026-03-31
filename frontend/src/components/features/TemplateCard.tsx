@@ -9,6 +9,9 @@ interface TemplateCardProps {
 }
 
 export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick }) => {
+  const rating = template.rating ?? 0;
+  const usageCount = template.usageCount ?? 0;
+
   const renderStars = (rating: number) => {
     const fullStars = Math.floor(rating);
     const hasHalf = rating % 1 >= 0.5;
@@ -75,16 +78,16 @@ export const TemplateCard: React.FC<TemplateCardProps> = ({ template, onClick })
         fontSize: 'var(--text-sm)',
       }}>
         <div style={{ color: 'var(--rebel-gold)' }}>
-          {renderStars(template.rating)}
+          {renderStars(rating)}
           <span style={{ 
             marginLeft: 'var(--space-1)', 
             color: 'var(--rebel-gray-400)',
           }}>
-            {template.rating.toFixed(1)}
+            {rating.toFixed(1)}
           </span>
         </div>
         <div style={{ color: 'var(--rebel-gray-400)' }}>
-          {template.usageCount.toLocaleString()} uses
+          {usageCount.toLocaleString()} uses
         </div>
       </div>
     </Card>

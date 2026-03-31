@@ -112,4 +112,8 @@ export async function healthCheck(): Promise<boolean> {
   }
 }
 
+export function getPool(): Pool {
+  return pool;
+}
+
 export { pool };

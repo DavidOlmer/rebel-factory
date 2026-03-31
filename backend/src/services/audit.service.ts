@@ -137,7 +137,7 @@ export async function logBatch(entries: AuditEntry[]): Promise<AuditLog[]> {
 /**
  * Query audit logs with filters
  */
-export async function queryLogs(filters: AuditFilters = {}): Promise<AuditQueryResult> {
+export async function queryLogs(filters: Partial<AuditFilters> = {}): Promise<AuditQueryResult> {
   const conditions: string[] = ['1=1'];
   const params: unknown[] = [];
   let paramIndex = 1;
@@ -337,13 +337,16 @@ export async function getSummary(
  * Export audit logs to JSON or CSV format
  */
 export async function exportLogs(options: AuditExportOptions): Promise<Buffer> {
-  const { format, filters = {}, includeMetadata = true, maxRows = 10000 } = options;
+  const { format, includeMetadata = true, maxRows = 10000 } = options;
+  const filters: Partial<AuditFilters> = options.filters ?? {};
 
   // Override limit with maxRows
   const result = await queryLogs({
     ...filters,
     limit: maxRows,
     offset: 0,
+    orderBy: filters.orderBy ?? 'timestamp',
+    orderDir: filters.orderDir ?? 'desc',
   });
 
   if (format === 'json') {

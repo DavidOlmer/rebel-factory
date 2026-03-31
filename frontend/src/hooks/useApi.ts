@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import type { Sprint } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3300/api';
 
@@ -174,6 +175,10 @@ export function useMutation<T, P = unknown>(
     mutate,
     reset: () => setState({ loading: false, error: null, data: null }),
   };
+}
+
+export function useSprints(): UseApiResult<Sprint[]> {
+  return useApi<Sprint[]>('/sprints');
 }
 
 // Export API_BASE for use in other modules

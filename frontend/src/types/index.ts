@@ -3,7 +3,15 @@
 export type Tier = 'core' | 'venture' | 'personal';
 export type Category = 'rebelgroup' | 'entertainment' | 'travel' | 'services' | 'innovation';
 export type Status = 'active' | 'inactive' | 'pending' | 'error' | 'idle' | 'running' | 'paused' | 'archived';
-export type AlertType = 'warning' | 'success' | 'info' | 'error';
+export type AlertType =
+  | 'warning'
+  | 'success'
+  | 'info'
+  | 'error'
+  | 'drift_warning'
+  | 'pattern'
+  | 'optimization'
+  | 'anomaly';
 
 export interface Agent {
   id: string;
@@ -12,8 +20,9 @@ export interface Agent {
   emoji?: string;
   description?: string;
   tier: Tier;
-  category?: Category;
+  category?: Category | string;
   status: Status;
+  template?: string;
   model?: string;
   skills?: string[];
   qualityScore?: number;
@@ -58,7 +67,7 @@ export interface Prompt {
 export interface Insight {
   id: string;
   level: 'individual' | 'venture' | 'rebel';
-  type: 'drift_warning' | 'pattern' | 'optimization' | 'anomaly';
+  type: AlertType;
   title: string;
   description: string;
   message?: string; // alias for description
@@ -207,4 +216,21 @@ export interface CostsData {
   tierBudgets: TierBudget[];
   modelCosts: ModelCost[];
   dailySpend: DailySpend[];
+}
+
+export interface QualityGate {
+  name: string;
+  status: 'passed' | 'failed' | 'pending' | 'running';
+  details?: string;
+}
+
+export interface Sprint {
+  id: string;
+  agentId: string;
+  agentName: string;
+  task: string;
+  status: 'planning' | 'in_progress' | 'review' | 'completed' | 'failed';
+  qualityGates: QualityGate[];
+  createdAt: string;
+  completedAt?: string;
 }

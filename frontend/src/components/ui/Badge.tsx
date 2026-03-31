@@ -6,7 +6,7 @@ type BadgeVariant = 'tier' | 'category' | 'status' | 'default';
 interface BadgeProps {
   variant?: BadgeVariant;
   tier?: Tier;
-  category?: Category;
+  category?: Category | string;
   status?: Status;
   children?: React.ReactNode;
 }
@@ -66,6 +66,22 @@ const statusStyles: Record<Status, React.CSSProperties> = {
     backgroundColor: 'rgba(239, 64, 53, 0.1)',
     color: 'var(--rebel-red)',
   },
+  idle: {
+    backgroundColor: 'var(--rebel-gray-100)',
+    color: 'var(--rebel-gray-500)',
+  },
+  running: {
+    backgroundColor: 'rgba(19, 191, 203, 0.1)',
+    color: 'var(--rebel-cyan)',
+  },
+  paused: {
+    backgroundColor: 'rgba(206, 152, 78, 0.1)',
+    color: 'var(--rebel-gold)',
+  },
+  archived: {
+    backgroundColor: 'var(--rebel-gray-100)',
+    color: 'var(--rebel-gray-500)',
+  },
 };
 
 const tierLabels: Record<Tier, string> = {
@@ -87,7 +103,19 @@ const statusLabels: Record<Status, string> = {
   inactive: 'Inactive',
   pending: 'Pending',
   error: 'Error',
+  idle: 'Idle',
+  running: 'Running',
+  paused: 'Paused',
+  archived: 'Archived',
 };
+
+function formatFallbackLabel(value: string): string {
+  return value
+    .split(/[_-]/g)
+    .filter(Boolean)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
+}
 
 export const Badge: React.FC<BadgeProps> = ({
   variant = 'default',
@@ -115,8 +143,15 @@ export const Badge: React.FC<BadgeProps> = ({
     style = { ...style, ...tierStyles[tier] };
     label = label || tierLabels[tier];
   } else if (variant === 'category' && category) {
-    style = { ...style, ...categoryStyles[category] };
-    label = label || categoryLabels[category];
+    const knownCategory = category as Category;
+    style = {
+      ...style,
+      ...(categoryStyles[knownCategory] ?? {
+        backgroundColor: 'var(--rebel-gray-100)',
+        color: 'var(--rebel-gray-600)',
+      }),
+    };
+    label = label || (categoryLabels[knownCategory] ?? formatFallbackLabel(category));
   } else if (variant === 'status' && status) {
     style = { ...style, ...statusStyles[status] };
     label = label || statusLabels[status];

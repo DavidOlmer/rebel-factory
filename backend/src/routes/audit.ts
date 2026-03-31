@@ -173,6 +173,7 @@ router.get('/correlation/:id', async (req: Request, res: Response) => {
     const result = await AuditService.query({
       correlationId: id,
       limit: 100,
+      offset: 0,
       orderBy: 'timestamp',
       orderDir: 'asc',
     });

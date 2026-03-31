@@ -1,13 +1,28 @@
 import { Link } from 'react-router-dom'
 import { Bot, Activity, Clock, AlertTriangle } from 'lucide-react'
-import type { Agent } from '../types'
+import type { Agent, Status } from '../types'
 
 interface AgentCardProps {
   agent: Agent
 }
 
 export default function AgentCard({ agent }: AgentCardProps) {
-  const statusConfig = {
+  const statusConfig: Partial<Record<Status, {
+    icon: typeof Activity
+    color: string
+    bgColor: string
+    borderColor: string
+    label: string
+    pulse: boolean
+  }>> = {
+    active: {
+      icon: Activity,
+      color: 'text-green-400',
+      bgColor: 'bg-green-500/20',
+      borderColor: 'border-green-500/30',
+      label: 'Active',
+      pulse: true,
+    },
     running: {
       icon: Activity,
       color: 'text-green-400',
@@ -32,10 +47,45 @@ export default function AgentCard({ agent }: AgentCardProps) {
       label: 'Error',
       pulse: false,
     },
+    inactive: {
+      icon: Clock,
+      color: 'text-gray-400',
+      bgColor: 'bg-gray-500/20',
+      borderColor: 'border-gray-500/30',
+      label: 'Inactive',
+      pulse: false,
+    },
+    pending: {
+      icon: Clock,
+      color: 'text-yellow-400',
+      bgColor: 'bg-yellow-500/20',
+      borderColor: 'border-yellow-500/30',
+      label: 'Pending',
+      pulse: false,
+    },
+    paused: {
+      icon: Clock,
+      color: 'text-yellow-400',
+      bgColor: 'bg-yellow-500/20',
+      borderColor: 'border-yellow-500/30',
+      label: 'Paused',
+      pulse: false,
+    },
+    archived: {
+      icon: Clock,
+      color: 'text-gray-400',
+      bgColor: 'bg-gray-500/20',
+      borderColor: 'border-gray-500/30',
+      label: 'Archived',
+      pulse: false,
+    },
   }
 
-  const status = statusConfig[agent.status]
+  const status = statusConfig[agent.status] ?? statusConfig.idle!
   const StatusIcon = status.icon
+  const createdLabel = agent.createdAt
+    ? new Date(agent.createdAt).toLocaleDateString()
+    : 'Unknown'
 
   return (
     <Link
@@ -62,13 +112,13 @@ export default function AgentCard({ agent }: AgentCardProps) {
         {agent.name}
       </h3>
       <p className="text-gray-400 text-sm mt-1">
-        Template: {agent.template}
+        Template: {agent.template ?? 'Custom'}
       </p>
 
       {/* Footer */}
       <div className="mt-4 pt-4 border-t border-gray-700 flex items-center justify-between text-sm">
         <span className="text-gray-500">
-          Created {new Date(agent.createdAt).toLocaleDateString()}
+          Created {createdLabel}
         </span>
         <StatusIcon className={`w-4 h-4 ${status.color}`} />
       </div>

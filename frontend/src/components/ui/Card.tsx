@@ -6,6 +6,7 @@ interface CardProps {
   hoverable?: boolean;
   onClick?: () => void;
   style?: React.CSSProperties;
+  className?: string;
 }
 
 const paddingMap = {
@@ -21,6 +22,7 @@ export const Card: React.FC<CardProps> = ({
   hoverable = false,
   onClick,
   style,
+  className,
 }) => {
   const [isHovered, setIsHovered] = React.useState(false);
 
@@ -40,6 +42,7 @@ export const Card: React.FC<CardProps> = ({
 
   return (
     <div
+      className={className}
       style={cardStyle}
       onClick={onClick}
       onMouseEnter={() => setIsHovered(true)}

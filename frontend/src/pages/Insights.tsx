@@ -466,7 +466,11 @@ const InsightsListSection: React.FC<{
     error: insights.filter(i => i.type === 'error').length,
     success: insights.filter(i => i.type === 'success').length,
     info: insights.filter(i => i.type === 'info').length,
-  };
+    drift_warning: insights.filter(i => i.type === 'drift_warning').length,
+    pattern: insights.filter(i => i.type === 'pattern').length,
+    optimization: insights.filter(i => i.type === 'optimization').length,
+    anomaly: insights.filter(i => i.type === 'anomaly').length,
+  } satisfies Record<FilterType, number>;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -674,15 +678,15 @@ export const Insights: React.FC = () => {
       )}
 
       {activeTab === 'context' && (
-        <ContextHealthSection health={health} />
+        <ContextHealthSection health={health ?? undefined} />
       )}
 
       {activeTab === 'exceptions' && (
-        <ExceptionPatternsSection exceptions={exceptions} />
+        <ExceptionPatternsSection exceptions={exceptions ?? undefined} />
       )}
 
       {activeTab === 'scout' && (
-        <ScoutResultsSection scout={scout} />
+        <ScoutResultsSection scout={scout ?? undefined} />
       )}
     </div>
   );

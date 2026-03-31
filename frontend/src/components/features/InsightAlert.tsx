@@ -17,26 +17,50 @@ const alertStyles: Record<AlertType, {
   warning: {
     background: 'rgba(206, 152, 78, 0.08)',
     border: 'rgba(206, 152, 78, 0.3)',
-    icon: '⚠️',
+    icon: '!',
     iconColor: 'var(--rebel-gold)',
   },
   success: {
     background: 'rgba(19, 191, 203, 0.08)',
     border: 'rgba(19, 191, 203, 0.3)',
-    icon: '✓',
+    icon: 'OK',
     iconColor: 'var(--rebel-cyan)',
   },
   error: {
     background: 'rgba(239, 64, 53, 0.08)',
     border: 'rgba(239, 64, 53, 0.3)',
-    icon: '✕',
+    icon: 'X',
     iconColor: 'var(--rebel-red)',
   },
   info: {
     background: 'rgba(49, 103, 177, 0.08)',
     border: 'rgba(49, 103, 177, 0.3)',
-    icon: 'ℹ',
+    icon: 'i',
     iconColor: 'var(--rebel-blue)',
+  },
+  drift_warning: {
+    background: 'rgba(206, 152, 78, 0.08)',
+    border: 'rgba(206, 152, 78, 0.3)',
+    icon: 'DW',
+    iconColor: 'var(--rebel-gold)',
+  },
+  pattern: {
+    background: 'rgba(49, 103, 177, 0.08)',
+    border: 'rgba(49, 103, 177, 0.3)',
+    icon: 'PT',
+    iconColor: 'var(--rebel-blue)',
+  },
+  optimization: {
+    background: 'rgba(19, 191, 203, 0.08)',
+    border: 'rgba(19, 191, 203, 0.3)',
+    icon: '+',
+    iconColor: 'var(--rebel-cyan)',
+  },
+  anomaly: {
+    background: 'rgba(239, 64, 53, 0.08)',
+    border: 'rgba(239, 64, 53, 0.3)',
+    icon: 'AN',
+    iconColor: 'var(--rebel-red)',
   },
 };
 
@@ -46,13 +70,15 @@ export const InsightAlert: React.FC<InsightAlertProps> = ({
   onAction,
 }) => {
   const style = alertStyles[insight.type];
-  
-  const formatTime = (timestamp: string) => {
+
+  const formatTime = (timestamp?: string) => {
+    if (!timestamp) return 'Unknown';
+
     const date = new Date(timestamp);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const hours = Math.floor(diff / (1000 * 60 * 60));
-    
+
     if (hours < 1) return 'Just now';
     if (hours < 24) return `${hours}h ago`;
     return `${Math.floor(hours / 24)}d ago`;
@@ -67,20 +93,20 @@ export const InsightAlert: React.FC<InsightAlertProps> = ({
       border: `1px solid ${style.border}`,
       borderRadius: 'var(--radius-lg)',
     }}>
-      {/* Icon */}
       <div style={{
         width: '2rem',
         height: '2rem',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        fontSize: 'var(--text-lg)',
+        fontSize: 'var(--text-sm)',
+        fontWeight: 700,
+        color: style.iconColor,
         flexShrink: 0,
       }}>
         {style.icon}
       </div>
 
-      {/* Content */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{
           display: 'flex',
@@ -101,16 +127,16 @@ export const InsightAlert: React.FC<InsightAlertProps> = ({
             flexShrink: 0,
             marginLeft: 'var(--space-2)',
           }}>
-            {formatTime(insight.timestamp)}
+            {formatTime(insight.timestamp ?? insight.createdAt)}
           </span>
         </div>
-        
+
         <p style={{
           fontSize: 'var(--text-sm)',
           color: 'var(--rebel-gray-600)',
           marginBottom: insight.actionRequired ? 'var(--space-3)' : 0,
         }}>
-          {insight.message}
+          {insight.message ?? insight.description}
         </p>
 
         {insight.actionRequired && (
@@ -127,7 +153,6 @@ export const InsightAlert: React.FC<InsightAlertProps> = ({
         )}
       </div>
 
-      {/* Dismiss button for non-action alerts */}
       {!insight.actionRequired && onDismiss && (
         <button
           onClick={onDismiss}
@@ -141,7 +166,7 @@ export const InsightAlert: React.FC<InsightAlertProps> = ({
             lineHeight: 1,
           }}
         >
-          ×
+          x
         </button>
       )}
     </div>

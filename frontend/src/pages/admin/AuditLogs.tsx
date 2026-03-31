@@ -73,7 +73,7 @@ const generateMockAuditData = (): AuditLogEntry[] => {
       actorType: template.actorType,
       resource: template.resource,
       resourceId: `${template.resource}_${Math.random().toString(36).substr(2, 8)}`,
-      details: getDetailText(template.action, actor),
+      details: getDetailText(template.action),
       severity: template.severity,
       tenantId: tenants[Math.floor(Math.random() * tenants.length)],
     })
@@ -82,7 +82,7 @@ const generateMockAuditData = (): AuditLogEntry[] => {
   return entries.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
 }
 
-function getDetailText(action: string, actor: string): string {
+function getDetailText(action: string): string {
   const details: Record<string, string[]> = {
     'user.login': ['User logged in successfully', 'Session started from new device', 'Login from recognized location'],
     'user.logout': ['User logged out', 'Session ended', 'Signed out from all devices'],

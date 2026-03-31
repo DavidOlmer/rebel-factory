@@ -39,3 +39,9 @@ export const config = {
     url: process.env.FRONTEND_URL || 'http://localhost:3400',
   },
 };
+
+export function validateConfig(): void {
+  if (!config.frontend.url) {
+    throw new Error('FRONTEND_URL must be configured');
+  }
+}

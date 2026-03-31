@@ -125,7 +125,11 @@ export const requireMember = requireRole('member', 'admin');
  * Generate JWT token for user
  */
 export function generateToken(user: SessionUser, expiresIn: string = '24h'): string {
-  return jwt.sign(user, JWT_SECRET, { expiresIn });
+  return jwt.sign(
+    user as object,
+    JWT_SECRET as jwt.Secret,
+    { expiresIn: expiresIn as jwt.SignOptions['expiresIn'] }
+  );
 }
 
 /**

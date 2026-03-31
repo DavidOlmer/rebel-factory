@@ -131,6 +131,18 @@ export interface Agent {
   skills: string[];
   model: string;
   config: Record<string, unknown> | null;
+  tenantId?: string | null;
+  templateId?: string | null;
+  ownerId?: string | null;
+  icon?: string | null;
+  tier?: 'personal' | 'venture' | 'core';
+  status?: 'idle' | 'running' | 'paused' | 'archived';
+  temperature?: number | null;
+  tools?: string[] | null;
+  totalRuns?: number;
+  totalTokensUsed?: number;
+  avgRunDurationMs?: number;
+  lastRunAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -152,9 +164,39 @@ export interface ValidationResult {
   warnings: string[];
 }
 
+export interface AgentListFilter {
+  tenantId?: string;
+  tier?: 'personal' | 'venture' | 'core';
+  status?: 'idle' | 'running' | 'paused' | 'archived';
+  ownerId?: string;
+}
+
+export interface AgentRunInput {
+  userId: string;
+  taskType: 'sprint' | 'chat' | 'analysis' | 'research' | 'review';
+  taskDescription?: string;
+  tenantId?: string;
+}
+
+export interface AgentRunOutput {
+  id: string;
+  agentId: string;
+  status: 'running' | 'completed' | 'failed';
+  startedAt: Date;
+}
+
 // WebSocket message types
 export interface WSMessage {
-  type: 'agent_created' | 'agent_updated' | 'agent_deleted' | 'sprint_created' | 'sprint_updated';
+  type:
+    | 'agent_created'
+    | 'agent_updated'
+    | 'agent_deleted'
+    | 'sprint_created'
+    | 'sprint_updated'
+    | 'memory_added'
+    | 'memory_consolidated'
+    | 'batch_consolidation_complete'
+    | 'pattern_deleted';
   payload: unknown;
   timestamp: string;
 }

@@ -77,6 +77,7 @@ export default function SprintTimeline({ sprints }: SprintTimelineProps) {
                         passed: 'bg-green-500/20 text-green-400',
                         failed: 'bg-red-500/20 text-red-400',
                         pending: 'bg-gray-500/20 text-gray-400',
+                        running: 'bg-yellow-500/20 text-yellow-400',
                       }
                       return (
                         <span
